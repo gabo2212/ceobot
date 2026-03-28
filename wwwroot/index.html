@@ -1,0 +1,104 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>CEObot</title> 
+    <link rel="stylesheet" href="/css/site.css" />
+</head>
+<body>
+    <div class="wrap">
+        <header>
+  <img src="/img/logo.svg" alt="logo" />
+  <div class="title-stack">
+    <a href="auth.html" class="btn btn-sm">Login/Signup</a>
+  </div>
+</header>
+
+        <div class="grid">
+            <div class="card">
+                <h3>Report an Issue (Tenant)</h3>
+                <p class="muted">Submit a request; the system triages it.</p>
+                <a class="btn" href="/tenant.html">Open tenant form</a>
+            </div>
+
+            <!-- Voice intake button -->
+            <div class="card">
+                <h3>Voice Intake (beta)</h3>
+                <p class="muted">Leave a voice message; we transcribe and triage it.</p>
+                <a class="btn" href="/voice.html">Open voice page</a>
+            </div>
+
+            <div class="card">
+                <h3>Staff Portal</h3>
+                <p class="muted">Sign in with Staff ID + Access Key.</p>
+                <a class="btn" href="/staff.html">Open staff portal</a>
+            </div>
+
+            <div class="card">
+                <h3>Admin</h3>
+                <p class="muted">Manage staff and tickets.</p>
+                <a class="btn" href="/admin.html">Open admin</a>
+            </div>
+
+            <div class="card">
+                <h3>API Docs</h3>
+                <p class="muted">Explore and test endpoints.</p>
+                <a class="btn" href="/swagger">Open Swagger</a>
+            </div>
+
+            
+
+            <!-- NEW: Debug & Self-Test dashboard -->
+            <div class="card">
+                <h3>Debug &amp; Self-Test</h3>
+                <p class="muted">Run automated checks for APIs &amp; flows.</p>
+                <a class="btn" href="/debug.html">Open debug dashboard</a>
+            </div>
+        </div>
+
+        <div id="status" class="muted" style="margin-top:14px">Status: …</div>
+        <pre id="dbg" class="debug" style="display:none"></pre>
+    </div>
+
+    <script>
+        function adminHeaders() {
+            const k = localStorage.getItem('adminKey');
+            return k ? { 'X-Admin-Key': k } : {};
+        }
+        const SHOW_DEBUG = true;
+        const dbg = document.getElementById('dbg');
+        if (SHOW_DEBUG) dbg.style.display = 'block';
+        const log = (...a) => {
+            console.log('[HOME]', ...a);
+            if (SHOW_DEBUG) dbg.textContent += a.map(x => typeof x === 'string' ? x : JSON.stringify(x)).join(' ') + '\n';
+        };
+        async function j(url) {
+            try {
+                const r = await fetch(url, { headers: adminHeaders(), cache: 'no-store' });
+                if (r.status === 401) return { __secured: true }; // locked down, not broken
+                return await r.json();
+            } catch {
+                return null;
+            }
+        }
+
+        (async () => {
+            const h = await j('/api/health');
+            const d = await j('/api/diag/openai');
+
+            const online = (h?.status === 'ok') ? 'online' : 'offline';
+            const textModel = d?.model || '—';
+            const sttModel = d?.transcribeModel || '—';
+            const parser = d?.parserModel || 'regex-local';
+            const parserTag = d?.parserIsAi ? `parser=${parser}` : `parser=${parser}`;
+
+            const openAiTxt = d?.__secured ? 'secured' : (d?.hasKey ? 'on' : 'off');
+            const s = `Status: ${online} • OpenAI ${openAiTxt} • text=${textModel} • stt=${sttModel} • ${parserTag}`;
+
+            document.getElementById('status').textContent = s;
+            log('final', s);
+        })();
+    </script>
+</body>
+</html>

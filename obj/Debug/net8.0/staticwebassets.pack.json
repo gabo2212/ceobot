@@ -1,0 +1,85 @@
+{
+  "Files": [
+    {
+      "Id": "/home/gabrielfort/Desktop/repos/CEObot/CEObot/wwwroot/_outbox/email-20250929T174822220-tdgf@icloud.com.eml",
+      "PackagePath": "staticwebassets/_outbox/email-20250929T174822220-tdgf@icloud.com.eml"
+    },
+    {
+      "Id": "/home/gabrielfort/Desktop/repos/CEObot/CEObot/wwwroot/admin-accounts.html",
+      "PackagePath": "staticwebassets/admin-accounts.html"
+    },
+    {
+      "Id": "/home/gabrielfort/Desktop/repos/CEObot/CEObot/wwwroot/admin-staff.html",
+      "PackagePath": "staticwebassets/admin-staff.html"
+    },
+    {
+      "Id": "/home/gabrielfort/Desktop/repos/CEObot/CEObot/wwwroot/admin-tickets.html",
+      "PackagePath": "staticwebassets/admin-tickets.html"
+    },
+    {
+      "Id": "/home/gabrielfort/Desktop/repos/CEObot/CEObot/wwwroot/admin.html",
+      "PackagePath": "staticwebassets/admin.html"
+    },
+    {
+      "Id": "/home/gabrielfort/Desktop/repos/CEObot/CEObot/wwwroot/auth.html",
+      "PackagePath": "staticwebassets/auth.html"
+    },
+    {
+      "Id": "/home/gabrielfort/Desktop/repos/CEObot/CEObot/wwwroot/css/site.css",
+      "PackagePath": "staticwebassets/css/site.css"
+    },
+    {
+      "Id": "/home/gabrielfort/Desktop/repos/CEObot/CEObot/wwwroot/debug.html",
+      "PackagePath": "staticwebassets/debug.html"
+    },
+    {
+      "Id": "/home/gabrielfort/Desktop/repos/CEObot/CEObot/wwwroot/img/logo.png",
+      "PackagePath": "staticwebassets/img/logo.png"
+    },
+    {
+      "Id": "/home/gabrielfort/Desktop/repos/CEObot/CEObot/wwwroot/img/logo.svg",
+      "PackagePath": "staticwebassets/img/logo.svg"
+    },
+    {
+      "Id": "/home/gabrielfort/Desktop/repos/CEObot/CEObot/wwwroot/index.html",
+      "PackagePath": "staticwebassets/index.html"
+    },
+    {
+      "Id": "/home/gabrielfort/Desktop/repos/CEObot/CEObot/wwwroot/js/header.js",
+      "PackagePath": "staticwebassets/js/header.js"
+    },
+    {
+      "Id": "/home/gabrielfort/Desktop/repos/CEObot/CEObot/wwwroot/partials/header.html",
+      "PackagePath": "staticwebassets/partials/header.html"
+    },
+    {
+      "Id": "/home/gabrielfort/Desktop/repos/CEObot/CEObot/wwwroot/staff.html",
+      "PackagePath": "staticwebassets/staff.html"
+    },
+    {
+      "Id": "/home/gabrielfort/Desktop/repos/CEObot/CEObot/wwwroot/tenant.html",
+      "PackagePath": "staticwebassets/tenant.html"
+    },
+    {
+      "Id": "/home/gabrielfort/Desktop/repos/CEObot/CEObot/wwwroot/voice.html",
+      "PackagePath": "staticwebassets/voice.html"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.CEObot.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.build.CEObot.props",
+      "PackagePath": "build\\CEObot.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildMultiTargeting.CEObot.props",
+      "PackagePath": "buildMultiTargeting\\CEObot.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildTransitive.CEObot.props",
+      "PackagePath": "buildTransitive\\CEObot.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

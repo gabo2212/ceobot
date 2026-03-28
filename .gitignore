@@ -1,0 +1,3 @@
+appsettings*.json
+ceobot.db
+wwwroot/_outbox/

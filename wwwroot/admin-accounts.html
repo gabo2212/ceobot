@@ -1,0 +1,411 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Admin · Accounts</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="css/site.css" />
+    <style>
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+            .table th, .table td {
+                border-bottom: 1px solid #1b2540;
+                padding: 8px 10px;
+            }
+
+            .table th {
+                text-align: left;
+                color: #9aa4b2;
+                font-weight: 700;
+                font-size: 12px;
+            }
+
+        .muted {
+            color: #9aa4b2
+        }
+
+        .pill {
+            padding: 4px 8px;
+            border-radius: 999px;
+            border: 1px solid #2a3552;
+            background: #0e1527;
+            font-size: 12px
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        .input {
+            background: #0b1323;
+            border: 1px solid #1f2438;
+            color: #e5e7eb;
+            border-radius: 10px;
+            padding: 8px 10px;
+        }
+
+        .btn {
+            background: #1f2937;
+            border: 1px solid #2b3547;
+            color: #e5e7eb;
+            padding: 8px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700
+        }
+
+            .btn:hover {
+                background: #273246
+            }
+
+            .btn.primary {
+                background: #2b5cff;
+                border-color: #2b5cff
+            }
+
+            .btn.destructive {
+                background: #5a1a1f;
+                border-color: #7c1e25
+            }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(12,1fr);
+            gap: 12px
+        }
+
+        .col-8 {
+            grid-column: span 8
+        }
+
+        .col-4 {
+            grid-column: span 4
+        }
+
+        @media (max-width: 900px) {
+            .col-8, .col-4 {
+                grid-column: span 12
+            }
+        }
+
+        .card {
+            background: #0c1324;
+            border: 1px solid #1b2540;
+            border-radius: 14px;
+            padding: 14px
+        }
+
+        .panel {
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 14px;
+            padding: 16px;
+            margin: 12px 0
+        }
+
+        .h {
+            font-size: 15px;
+            font-weight: 800;
+            margin: 0 0 8px
+        }
+
+        .small {
+            font-size: 12px;
+            color: #9aa4b2
+        }
+
+        .log {
+            background: #0b1020;
+            border: 1px dashed #213055;
+            border-radius: 10px;
+            padding: 10px;
+            font-family: ui-monospace, Menlo, Consolas, monospace;
+            font-size: 12px;
+            color: #c7d2fe;
+            white-space: pre-wrap;
+            max-height: 240px;
+            overflow: auto
+        }
+
+        .label {
+            font-size: 12px;
+            color: #9aa4b2;
+            margin-top: 6px
+        }
+    </style>
+    <script defer src="header.js"></script>
+</head>
+<body>
+    <div id="app-header"></div>
+
+    <div class="container">
+        <div class="page-title">Accounts Manager</div>
+        <div class="desc">Browse accounts, link to staff, change role, enable/disable. <span class="pill">Admin only</span></div>
+
+        <!-- Top actions -->
+        <div class="panel">
+            <div class="row">
+                <input id="q" class="input" placeholder="Search email…" style="min-width:260px" />
+                <select id="pageSize" class="input">
+                    <option>25</option>
+                    <option selected>50</option>
+                    <option>100</option>
+                </select>
+                <button class="btn" id="refreshBtn">Refresh</button>
+                <span class="small" id="countText"></span>
+                <span class="pill" id="meBadge">—</span>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- list -->
+            <div class="col-8">
+                <div class="card">
+                    <div class="h">Accounts</div>
+                    <table class="table" id="tbl">
+                        <thead>
+                            <tr>
+                                <th>Id</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Confirmed</th>
+                                <th>Disabled</th>
+                                <th>Staff</th>
+                                <th>Created</th>
+                                <th>Last login</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody">
+                            <tr><td colspan="9" class="muted">No data…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- details / editor -->
+            <div class="col-4">
+                <div class="card">
+                    <div class="h">Details</div>
+                    <div id="noSel" class="small">Select an account to manage.</div>
+
+                    <div id="editor" style="display:none">
+                        <div class="label">Account</div>
+                        <div id="accSummary" class="pill" style="display:inline-block">—</div>
+
+                        <div class="label">Role</div>
+                        <div class="row">
+                            <select id="roleSel" class="input">
+                                <option>Staff</option>
+                                <option>Admin</option>
+                            </select>
+                            <button class="btn" id="saveRoleBtn">Save role</button>
+                        </div>
+
+                        <div class="label">Link to Staff</div>
+                        <div class="row">
+                            <select id="staffSel" class="input" style="min-width:240px">
+                                <option value="">— choose staff —</option>
+                            </select>
+                            <button class="btn" id="linkBtn">Link</button>
+                            <button class="btn" id="unlinkBtn">Unlink</button>
+                        </div>
+
+                        <div class="label">State</div>
+                        <div class="row">
+                            <button class="btn" id="enableBtn">Enable</button>
+                            <button class="btn destructive" id="disableBtn">Disable</button>
+                        </div>
+
+                        <div class="label">Danger</div>
+                        <div class="row">
+                            <button class="btn destructive" id="deleteBtn">Delete account</button>
+                        </div>
+
+                        <div class="label">Result</div>
+                        <div id="out" class="log">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const api = {
+            me: () => fetch('/api/auth/me', { credentials: 'same-origin' }).then(r => r.ok ? r.json() : null),
+            list: (q, skip, take) =>
+                fetch(`/api/admin/accounts?search=${encodeURIComponent(q || '')}&skip=${skip || 0}&take=${take || 50}`, { credentials: 'same-origin' }).then(r => r.json()),
+            get: (id) =>
+                fetch(`/api/admin/accounts/${id}`, { credentials: 'same-origin' }).then(r => r.json()),
+            setRole: (id, role) =>
+                fetch(`/api/admin/accounts/${id}/role`, {
+                    method: 'POST', credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role })
+                }).then(r => r.json()),
+            link: (id, staffId) =>
+                fetch(`/api/admin/accounts/${id}/link-staff`, {
+                    method: 'POST', credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ staffId })
+                }).then(r => r.json()),
+            disable: (id, disabled) =>
+                fetch(`/api/admin/accounts/${id}/disabled`, {
+                    method: 'POST', credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ disabled })
+                }).then(r => r.json()),
+            del: (id) =>
+                fetch(`/api/admin/accounts/${id}`, { method: 'DELETE', credentials: 'same-origin' }).then(r => r.json()),
+            staffList: () =>
+                fetch('/api/admin/staff', { credentials: 'same-origin' }).then(r => r.json())
+        };
+
+const tbody = document.getElementById('tbody');
+const q = document.getElementById('q');
+const pageSize = document.getElementById('pageSize');
+const refreshBtn = document.getElementById('refreshBtn');
+const countText = document.getElementById('countText');
+const meBadge = document.getElementById('meBadge');
+
+const noSel = document.getElementById('noSel');
+const editor = document.getElementById('editor');
+const out = document.getElementById('out');
+const accSummary = document.getElementById('accSummary');
+const roleSel = document.getElementById('roleSel');
+const staffSel = document.getElementById('staffSel');
+const saveRoleBtn = document.getElementById('saveRoleBtn');
+const linkBtn = document.getElementById('linkBtn');
+const unlinkBtn = document.getElementById('unlinkBtn');
+const enableBtn = document.getElementById('enableBtn');
+const disableBtn = document.getElementById('disableBtn');
+const deleteBtn = document.getElementById('deleteBtn');
+
+let selId = null;
+let cacheStaff = [];
+
+function fmtDate(s) { if (!s) return '—'; const d = new Date(s); return d.toLocaleString(); }
+function setOut(obj) { out.textContent = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2); }
+
+async function requireAdmin() {
+  const me = await api.me();
+  if (!me || me.role !== 'Admin') {
+    alert('Admin sign-in required.');
+    location.href = '/auth.html';
+    return false;
+  }
+  meBadge.textContent = `${me.email} • ${me.role}`;
+  return true;
+}
+
+async function fillStaff() {
+  cacheStaff = await api.staffList(); // expects id, name
+  staffSel.innerHTML = '<option value="">— choose staff —</option>' +
+    (Array.isArray(cacheStaff) ? cacheStaff.map(s => `<option value="${s.id}">#${s.id} • ${s.name}</option>`).join('') : '');
+}
+
+async function refresh() {
+  tbody.innerHTML = `<tr><td colspan="9" class="muted">Loading…</td></tr>`;
+  const take = parseInt(pageSize.value, 10) || 50;
+  const res = await api.list(q.value, 0, take);
+  const items = res?.items || [];
+  countText.textContent = `${items.length} / ${res?.total ?? items.length}`;
+  tbody.innerHTML = '';
+  if (!items.length) {
+    tbody.innerHTML = `<tr><td colspan="9" class="muted">No matches.</td></tr>`;
+    return;
+  }
+  for (const a of items) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${a.id}</td>
+      <td>${a.email}</td>
+      <td>${a.role}</td>
+      <td>${a.emailConfirmed ? '✔' : '—'}</td>
+      <td>${a.isDisabled ? '✔' : '—'}</td>
+      <td>${a.staffId ? ('#'+a.staffId + (a.staffName ? ' • ' + a.staffName : '')) : '—'}</td>
+      <td class="muted">${fmtDate(a.createdUtc)}</td>
+      <td class="muted">${fmtDate(a.lastLoginUtc)}</td>
+      <td><button class="btn" data-id="${a.id}">Manage</button></td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+async function openEditor(id) {
+  const a = await api.get(id);
+  if (!a || a.error) { setOut(a || 'not found'); return; }
+  selId = a.id;
+  noSel.style.display = 'none';
+  editor.style.display = 'block';
+  accSummary.textContent = `#${a.id} • ${a.email} • ${a.role}` + (a.isDisabled ? ' • DISABLED' : '');
+  roleSel.value = a.role;
+
+  // preselect staff if linked
+  if (a.staffId) {
+    const opt = Array.from(staffSel.options).find(o => o.value === String(a.staffId));
+    staffSel.value = opt ? String(a.staffId) : '';
+  } else {
+    staffSel.value = '';
+  }
+
+  setOut('—');
+}
+
+/* wire up */
+tbody.addEventListener('click', e => {
+  const b = e.target.closest('button[data-id]');
+  if (b) openEditor(parseInt(b.dataset.id, 10));
+});
+refreshBtn.addEventListener('click', refresh);
+q.addEventListener('keydown', e => { if (e.key === 'Enter') refresh(); });
+
+saveRoleBtn.addEventListener('click', async () => {
+  if (!selId) return;
+  const r = await api.setRole(selId, roleSel.value);
+  setOut(r); await openEditor(selId); await refresh();
+});
+
+linkBtn.addEventListener('click', async () => {
+  if (!selId) return;
+  const val = staffSel.value ? parseInt(staffSel.value, 10) : null;
+  const r = await api.link(selId, val);
+  setOut(r); await openEditor(selId); await refresh();
+});
+unlinkBtn.addEventListener('click', async () => {
+  if (!selId) return;
+  const r = await api.link(selId, null);
+  setOut(r); await openEditor(selId); await refresh();
+});
+
+enableBtn.addEventListener('click', async () => {
+  if (!selId) return;
+  const r = await api.disable(selId, false);
+  setOut(r); await openEditor(selId); await refresh();
+});
+disableBtn.addEventListener('click', async () => {
+  if (!selId) return;
+  if (!confirm('Disable this account?')) return;
+  const r = await api.disable(selId, true);
+  setOut(r); await openEditor(selId); await refresh();
+});
+
+deleteBtn.addEventListener('click', async () => {
+  if (!selId) return;
+  if (!confirm('PERMANENTLY delete this account?')) return;
+  const r = await api.del(selId);
+  setOut(r);
+  selId = null; editor.style.display = 'none'; noSel.style.display = 'block';
+  await refresh();
+});
+
+(async function init(){
+  if (!(await requireAdmin())) return;
+  await fillStaff();
+  await refresh();
+})();
+    </script>
+</body>
+</html>

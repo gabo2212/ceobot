@@ -1,0 +1,193 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <!-- ===== BLOCK: HEAD (styles) START ===== -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Tenant Request</title>
+    <link rel="stylesheet" href="/css/site.css" />
+
+    <style>
+        /* Small site-styled modal */
+        #toast {
+            position: fixed;
+            inset: 0;
+            display: none; /* toggled to flex */
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,.45);
+            z-index: 1000;
+        }
+
+            #toast .content {
+                background: #0f1720;
+                border: 1px solid #182230;
+                border-radius: 12px;
+                padding: 16px;
+                width: min(480px, 92%);
+            }
+
+                #toast .content .title {
+                    font-weight: 700;
+                    margin-bottom: 8px;
+                }
+
+                #toast .content .row {
+                    display: flex;
+                    gap: 8px;
+                    justify-content: flex-end;
+                    margin-top: 12px;
+                }
+    </style>
+    <!-- ===== BLOCK: HEAD (styles) END ===== -->
+</head>
+<body>
+    <!-- ===== BLOCK: WRAP START ===== -->
+    <div class="wrap">
+        <h1>Report an Issue</h1>
+
+        <div class="card">
+            <!-- ===== BLOCK: FORM START ===== -->
+            <div class="row">
+                <div>
+                    <label>Name</label>
+                    <input id="name">
+                </div>
+                <div>
+                    <label>Unit</label>
+                    <input id="unit">
+                </div>
+            </div>
+
+            <div class="row" style="margin-top:10px">
+                <div style="grid-column:1/3">
+                    <label>Contact</label>
+                    <input id="contact">
+                </div>
+            </div>
+
+            <div style="margin-top:10px">
+                <label>Description</label>
+                <textarea id="desc" placeholder="Describe the problem..."></textarea>
+            </div>
+            <!-- ===== BLOCK: FORM END ===== -->
+            <!-- ===== BLOCK: BUTTONS START ===== -->
+            <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+                <button class="btn" onclick="preview()">Preview type</button>
+                <button class="btn" onclick="submitTicket()">Submit ticket</button>
+            </div>
+            <!-- ===== BLOCK: BUTTONS END ===== -->
+            <!-- ===== BLOCK: OUTPUT START ===== -->
+            <pre id="out" class="debug"></pre>
+            <!-- ===== BLOCK: OUTPUT END ===== -->
+        </div>
+    </div>
+    <!-- ===== BLOCK: WRAP END ===== -->
+    <!-- ===== BLOCK: SCRIPT START ===== -->
+    <script>
+        // ===== BLOCK: UTILITIES START =====
+        const $ = (id) => document.getElementById(id);
+        const out = $('out');
+
+        // pretty log to the <pre>
+        const show = (o) => {
+            console.log('[TENANT]', o);
+            out.textContent = (typeof o === 'string') ? o : JSON.stringify(o, null, 2);
+        };
+
+        // gather form data
+        const payload = () => ({
+            tenantName: $('name').value.trim(),
+            unit: $('unit').value.trim(),
+            contact: $('contact').value.trim(),
+            description: $('desc').value.trim()
+        });
+
+        // clear the form inputs
+        function clearForm() {
+            ['name', 'unit', 'contact', 'desc'].forEach(id => { const el = $(id); if (el) el.value = ''; });
+            $('name')?.focus();
+        }
+
+        // site-styled OK dialog
+        function showToast(message) {
+            const toast = $('toast');
+            $('toastMsg').textContent = message || 'Done.';
+            toast.style.display = 'flex';
+
+            const onKey = (e) => { if (e.key === 'Escape' || e.key === 'Enter') close(); };
+
+            function close() {
+                toast.style.display = 'none';
+                $('toastOk').onclick = null;
+                document.removeEventListener('keydown', onKey);
+            }
+
+            $('toastOk').onclick = close;
+            document.addEventListener('keydown', onKey);
+        }
+        // ===== BLOCK: UTILITIES END =====
+
+        // ===== BLOCK: ACTION_PREVIEW START =====
+        async function preview() {
+            const body = payload();
+            show({ sending: body });
+            const r = await fetch('/api/classify', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            show({ status: r.status });
+            try { show(await r.json()); } catch { show('no json'); }
+        }
+        // ===== BLOCK: ACTION_PREVIEW END =====
+
+        // ===== BLOCK: ACTION_SUBMIT START =====
+        async function submitTicket() {
+            const body = payload();
+            show({ sending: body });
+
+            try {
+                const r = await fetch('/api/tickets', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                let data = null;
+                try { data = await r.json(); } catch { /* ignore parse errors */ }
+
+                if (r.ok) {
+                    const id = (data && typeof data.id !== 'undefined') ? ` #${data.id}` : '';
+                    show({ message: `Ticket${id} submitted!`, result: data });
+                    clearForm();
+                    showToast(`Ticket${id} submitted!`);
+                } else {
+                    show(data ?? { error: `HTTP ${r.status}` });
+                    showToast('Could not submit ticket. Please try again.');
+                }
+            } catch (err) {
+                show({ error: err?.message ?? 'network error' });
+                showToast('Network error while submitting.');
+            }
+        }
+        // ===== BLOCK: ACTION_SUBMIT END =====
+    </script>
+    <!-- ===== BLOCK: SCRIPT END ===== -->
+    <!-- ===== BLOCK: DIALOG START ===== -->
+    <div id="toast" aria-hidden="true">
+        <div class="content">
+            <div class="title">Submitted</div>
+            <div id="toastMsg" style="white-space:pre-wrap">Your request was sent.</div>
+            <div class="row">
+                <button id="toastOk" class="btn">OK</button>
+            </div>
+        </div>
+    </div>
+    <!-- ===== BLOCK: DIALOG END ===== -->
+
+</body>
+</html>
+<!-- ===== FILE: tenant.html END ===== -->

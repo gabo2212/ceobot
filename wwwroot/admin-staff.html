@@ -1,0 +1,357 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <!-- ===== BLOCK: ADMIN_STAFF_HTML_HEAD START ===== -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Admin • Manage Staff</title>
+    <link rel="stylesheet" href="/css/site.css" />
+    <!-- ===== BLOCK: ADMIN_STAFF_HTML_HEAD END ===== -->
+    <!-- ===== BLOCK: ADMIN_STAFF_STYLE START ===== -->
+    <style>
+        .wrap {
+            max-width: 1200px;
+            margin: 32px auto;
+            padding: 0 16px
+        }
+
+        .card {
+            background: #0f1720;
+            border: 1px solid #182230;
+            border-radius: 12px;
+            padding: 16px
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            align-items: center
+        }
+
+        .input {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #233142;
+            background: #0b1116;
+            color: #e7f3ff
+        }
+
+        .btn {
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 0;
+            background: #07b6d5;
+            color: #001018;
+            font-weight: 600;
+            cursor: pointer
+        }
+
+            .btn.ghost {
+                background: #182230;
+                color: #e7f3ff
+            }
+
+            .btn.small {
+                padding: 8px 10px;
+                font-size: .9rem
+            }
+
+        .list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill,minmax(300px,1fr));
+            gap: 12px
+        }
+
+        .person {
+            background: #0b1116;
+            border: 1px solid #1c2a37;
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px
+        }
+
+        .stack {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid #304256;
+            font-size: .75rem
+        }
+
+        .muted {
+            opacity: .8
+        }
+
+        /* New: keep actions inside each card, aligned bottom-right */
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            margin-top: 6px
+        }
+
+        .roles {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 6px
+        }
+
+        /* ===== CHIPS_ACTIVE_STYLE START ===== */
+        .btn.ghost.small.active {
+            background: #07b6d5;
+            color: #001018;
+            border-color: #07b6d5;
+        }
+        /* ===== CHIPS_ACTIVE_STYLE END ===== */
+
+    </style>
+    <!-- ===== BLOCK: ADMIN_STAFF_STYLE END ===== -->
+</head>
+<body>
+    <div class="wrap">
+
+
+        <div id="site-header"></div>
+        <script src="/js/header.js" defer></script>
+        <h1>Admin • Staff</h1>
+        <!-- ===== BLOCK: ADMIN_STAFF_TOOLBAR START ===== -->
+        <div class="card">
+            <div class="row">
+                <input id="key" class="input" placeholder="Admin key (stored locally)" />
+                <div class="stack">
+                    <button id="btnLogin" class="btn">Login</button>
+                    <button id="btnLogout" class="btn ghost">Logout</button>
+                    <button id="btnCreate" class="btn">New Staff</button>
+                    <button id="btnRefresh" class="btn ghost">Refresh</button>
+                </div>
+            </div>
+        </div>
+        <!-- ===== BLOCK: ADMIN_STAFF_TOOLBAR END ===== -->
+        <!-- ===== BLOCK: ADMIN_STAFF_LIST START ===== -->
+        <div class="card" style="margin-top:16px">
+            <div class="title">People</div>
+            <div id="list" class="list"></div>
+        </div>
+        <!-- ===== BLOCK: ADMIN_STAFF_LIST END ===== -->
+    </div>
+
+    <!-- ===== BLOCK: ADMIN_STAFF_MODAL START ===== -->
+    <!-- Modal -->
+    <div id="modal" class="modal" style="position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center">
+        <div class="content" style="background:#0f1720;border:1px solid #182230;border-radius:12px;padding:16px;max-width:560px;width:92%">
+            <div class="title" id="modalTitle">Create staff</div>
+
+            <div class="grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                <div>
+                    <div class="muted">Name</div>
+                    <input id="mName" class="input" />
+                </div>
+                <div>
+                    <div class="muted">Role/Title</div>
+                    <input id="mRole" class="input" />
+                </div>
+                <div>
+                    <div class="muted">Email</div>
+                    <input id="mEmail" class="input" />
+                </div>
+                <div>
+                    <div class="muted">Phone</div>
+                    <input id="mPhone" class="input" />
+                </div>
+                <div>
+                    <div class="muted">Preferred channel</div>
+                    <input id="mPref" class="input" value="Email" />
+                </div>
+                <div>
+                    <div class="muted">Active?</div>
+                    <select id="mActive" class="input">
+                        <option value="true">true</option>
+                        <option value="false">false</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="muted" style="margin-top:12px">Handles (categories)</div>
+            <div id="chips" class="stack" style="gap:8px;margin-bottom:12px;flex-wrap:wrap"></div>
+
+            <div class="stack">
+                <button id="mSave" class="btn">Save</button>
+                <button id="mCancel" class="btn ghost">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <!-- ===== BLOCK: ADMIN_STAFF_MODAL END ===== -->
+    <!-- ===== BLOCK: ADMIN_STAFF_SCRIPT START ===== -->
+    <script>
+        // tiny helpers
+        const $ = (id) => document.getElementById(id);
+        const q = (s, o = document) => o.querySelector(s);
+        const qa = (s, o = document) => [...o.querySelectorAll(s)];
+
+        const KEYLS = 'adminKey';
+        const CATS = ["Electrical", "Plumbing", "HVAC", "LocksDoors", "Appliances", "Pest", "Noise", "Gas", "Structural", "Emergency", "Other"];
+        let editingId = null;
+
+        function getKey() { return ($('key').value || '').trim(); }
+        function setKey(v) { $('key').value = v; localStorage.setItem(KEYLS, v); }
+        function api(url, opts = {}) {
+            const k = getKey();
+            const sep = url.includes('?') ? '&' : '?';
+            return fetch(url + sep + 'key=' + encodeURIComponent(k), opts);
+        }
+
+        // chips
+
+        // ===== CHIPS_HELPERS START  =====
+        function makeChip(name, active) {
+            const el = document.createElement('button');
+            el.type = 'button';
+            el.className = 'btn ghost small' + (active ? ' active' : '');
+            el.textContent = name;
+            // toggle blue on click
+            el.onclick = () => el.classList.toggle('active');
+            return el;
+        }
+        function selectedChips() {
+            return [...document.getElementById('chips')
+                .querySelectorAll('.btn.ghost.small.active')]
+                .map(b => b.textContent);
+        }
+        // ===== CHIPS_HELPERS END  =====
+
+
+        function closeModal() { $('modal').style.display = 'none'; editingId = null; }
+        function openModal(staff) {
+            $('modalTitle').textContent = staff ? ('Edit staff #' + staff.id) : 'Create staff';
+            $('mName').value = staff?.name || '';
+            $('mRole').value = staff?.role || '';
+            $('mEmail').value = staff?.email || '';
+            $('mPhone').value = staff?.phone || '';
+            $('mPref').value = staff?.preferredChannel || 'Email';
+            $('mActive').value = (staff?.isActive ?? true) ? 'true' : 'false';
+
+            const sel = new Set(staff?.handles || []);
+            $('chips').innerHTML = '';
+            for (const c of CATS) $('chips').appendChild(makeChip(c, sel.has(c)));
+
+            $('modal').style.display = 'flex';
+        }
+
+        // ===== BLOCK: ADMIN_STAFF_HTML personCard START =====
+        function personCard(p) {
+            const el = document.createElement('div');
+            el.className = 'person';
+            const roles = (p.handles || []).map(n => `<span class="tag">${n}</span>`).join(' ');
+
+            el.innerHTML = `
+    <div>
+      <div style="font-weight:700">
+        ${p.name} <span class="muted">#${p.id}</span>
+      </div>
+      <div class="muted">${p.role || ''}</div>
+      <div class="muted">${p.email || ''} ${p.phone ? ('• ' + p.phone) : ''}</div>
+      <div class="roles">${roles || '<span class="muted">No categories</span>'}</div>
+      <div class="muted" style="margin-top:6px">Active: ${p.isActive}</div>
+      <div class="muted">AccessKey: <code>${p.accessKey}</code></div>
+    </div>
+    <div class="actions">
+      <button class="btn small"        data-act="edit">Edit</button>
+      <button class="btn small"        data-act="rotate">Rotate Key</button>
+      <button class="btn small ghost"  data-act="delete">Delete</button>
+    </div>`;
+
+            // wire actions
+            q('[data-act="edit"]', el).onclick = () => { editingId = p.id; openModal(p); };
+            q('[data-act="rotate"]', el).onclick = async () => {
+                if (!confirm('Rotate key for ' + p.name + '?')) return;
+                const r = await api('/api/admin/staff/' + p.id + '/rotate', { method: 'POST' });
+                if (r.ok) { alert('Rotated'); load(); } else alert('Failed');
+            };
+            q('[data-act="delete"]', el).onclick = async () => {
+                if (!confirm('Delete ' + p.name + '?')) return;
+                const r = await api('/api/admin/staff/' + p.id, { method: 'DELETE' });
+                if (r.ok) { load(); } else alert('Failed');
+            };
+
+            return el;
+        }
+        // ===== BLOCK: ADMIN_STAFF_HTML personCard END =====
+
+
+        async function load() {
+            const r = await api('/api/admin/staff');
+            const list = $('list');
+            if (!r.ok) { list.innerHTML = '<div class="muted">Unauthorized or failed.</div>'; return; }
+            const arr = await r.json();
+            list.innerHTML = '';
+            for (const p of arr) list.appendChild(personCard(p));
+        }
+
+        // top buttons
+        $('btnLogin').onclick = () => { setKey(getKey()); load(); };
+        $('btnLogout').onclick = () => { setKey(''); $('list').innerHTML = ''; };
+        $('btnRefresh').onclick = load;
+        $('btnCreate').onclick = () => { editingId = null; openModal(null); };
+        $('mCancel').onclick = closeModal;
+
+        // ===== SAVE_HANDLER START (REPLACE) =====
+        $('mSave').onclick = async () => {
+            const cats = selectedChips();
+
+            const dto = {
+                name: $('mName').value.trim(),
+                email: $('mEmail').value.trim() || null,
+                phone: $('mPhone').value.trim() || null,
+                role: $('mRole').value.trim() || null,
+                preferredChannel: $('mPref').value.trim() || 'Email',
+                isActive: $('mActive').value === 'true',
+                // send BOTH keys; Program.cs accepts either
+                categories: cats,
+                handles: cats
+            };
+
+            let r;
+            if (editingId) {
+                r = await api('/api/admin/staff/' + editingId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dto)
+                });
+            } else {
+                r = await api('/api/admin/staff', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dto)
+                });
+            }
+
+            if (r.ok) {
+                closeModal();
+                load(); // refresh cards so handles show correctly
+            } else {
+                const err = await r.text().catch(() => '');
+                alert('Save failed\n' + err);
+            }
+        };
+        // ===== SAVE_HANDLER END (REPLACE) =====
+
+
+        // init
+        setKey(localStorage.getItem(KEYLS) || '');
+        if (getKey()) load();
+    </script>
+    <!-- ===== BLOCK: ADMIN_STAFF_SCRIPT END ===== -->
+</body>
+</html>

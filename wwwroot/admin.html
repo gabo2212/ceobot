@@ -1,0 +1,684 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <!-- ===== BLOCK: ADMIN_HTML_HEAD START ===== -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Admin</title>
+    <link rel="stylesheet" href="/css/site.css" />
+    <!-- ===== BLOCK: ADMIN_HTML_HEAD END ===== -->
+    <!-- ===== BLOCK: ADMIN_DASHBOARD_STYLE START (PATCHED) ===== -->
+    <style>
+        /* Dashboard-specific styles (keeps your dark theme) */
+        .dash-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .stat {
+            background: #0b1116;
+            border: 1px solid #1c2a37;
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+            .stat .label {
+                opacity: .8;
+                font-size: .9rem;
+            }
+
+            .stat .value {
+                font-weight: 800;
+                font-size: 1.6rem;
+                margin-top: 4px;
+            }
+
+        .chart {
+            background: #0b1116;
+            border: 1px solid #1c2a37;
+            border-radius: 12px;
+            padding: 12px;
+            overflow: hidden; /* PATCH: prevent overlap/bleed on resize */
+        }
+
+            .chart .title {
+                font-weight: 700;
+                margin-bottom: 8px;
+            }
+
+        .hbars .row {
+            display: grid;
+            grid-template-columns: 140px 1fr 48px;
+            align-items: center;
+            gap: 8px;
+            margin: 6px 0;
+        }
+
+        .hbars .label {
+            opacity: .9;
+        }
+
+        .hbars .barwrap {
+            height: 12px;
+            background: #0b1116;
+            border: 1px solid #1c2a37;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .hbars .bar {
+            height: 100%;
+            background: #07b6d5;
+        }
+
+        .hbars .count {
+            text-align: right;
+            opacity: .9;
+        }
+
+        /* Line chart SVG cosmetics */
+        .chart svg {
+            width: 100%;
+            height: 180px;
+        }
+
+        .grid line {
+            stroke: #1a2836;
+            stroke-width: 1;
+            shape-rendering: crispEdges;
+        }
+
+        .line {
+            fill: none;
+            stroke: #07b6d5;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .area {
+            fill: #07b6d5;
+            opacity: .15;
+        }
+
+        .point {
+            fill: #07b6d5;
+        }
+
+        /* NEW: wrapper + HTML labels so text never stretches when the SVG scales */
+        .linewrap {
+            position: relative;
+            width: 100%;
+        }
+
+            .linewrap svg {
+                display: block;
+                width: 100%;
+                height: 180px;
+            }
+
+            .linewrap .xlabels, .linewrap .ylabels {
+                position: absolute;
+                pointer-events: none;
+                color: #c8d6e5;
+                font-size: 12px;
+                line-height: 1;
+                font-variant-numeric: tabular-nums;
+            }
+
+            .linewrap .xlabels {
+                left: 44px; /* matches y-labels width below */
+                right: 12px;
+                bottom: 4px;
+                display: flex;
+                justify-content: space-between;
+                gap: 8px;
+            }
+
+            .linewrap .ylabels {
+                top: 18px;
+                bottom: 26px;
+                left: 0;
+                width: 44px; /* reserved gutter for y-axis numbers */
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                text-align: right;
+            }
+
+        /* ===== DONUT CHART STYLES (responsive, no overlap) ===== */
+        .donut {
+            display: grid;
+            grid-template-columns: 1fr; /* stack on small widths */
+            grid-template-rows: auto auto;
+            align-items: start;
+            gap: 14px;
+        }
+
+        @media (min-width: 560px) {
+            .donut {
+                grid-template-columns: 220px 1fr; /* side-by-side when there’s room */
+                grid-template-rows: initial;
+            }
+        }
+
+        .donut svg {
+            width: 100%;
+            max-width: 220px; /* same visual size as before */
+            aspect-ratio: 1 / 1; /* keep perfect circle */
+            height: auto;
+            display: block;
+            margin-inline: auto;
+        }
+
+        .donut .legend {
+            min-width: 0; /* allow shrinking instead of overflow */
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+            .donut .legend .item {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+                flex-wrap: wrap; /* wrap long lines on narrow cards */
+            }
+
+            .donut .legend .left {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                min-width: 0;
+            }
+
+            .donut .legend .swatch {
+                width: 10px;
+                height: 10px;
+                border-radius: 999px;
+            }
+
+            .donut .legend .label {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis; /* truncate super long labels */
+                max-width: 260px;
+                opacity: .95;
+            }
+
+            .donut .legend .val {
+                opacity: .85;
+                font-variant-numeric: tabular-nums;
+            }
+
+        /* ===== PATCH: force legend UNDER donut on all widths ===== */
+        .donut {
+            grid-template-columns: 1fr !important;
+            grid-template-rows: auto auto;
+            justify-items: center;
+            gap: 12px;
+        }
+
+        @media (min-width: 560px) {
+            .donut {
+                grid-template-columns: 1fr !important;
+            }
+            /* keep stacked even when wide */
+        }
+
+        .donut svg {
+            max-width: 240px; /* slightly larger center donut */
+        }
+
+        .donut .legend {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 8px 12px;
+            min-width: 0;
+        }
+
+            .donut .legend .item {
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            .donut .legend .left {
+                min-width: 0;
+            }
+
+            .donut .legend .label {
+                max-width: 100%;
+            }
+    </style>
+    <!-- ===== BLOCK: ADMIN_DASHBOARD_STYLE END (PATCHED) ===== -->
+</head>
+<body>
+    <!-- ===== BLOCK: ADMIN_HEADER START ===== -->
+    <div id="site-header"></div>
+    <script src="/js/header.js" defer></script>
+
+    <!-- ===== BLOCK: ADMIN_HEADER END ===== -->
+    <!-- ===== BLOCK: ADMIN_MAIN_CARD START ===== -->
+    <main class="container">
+        <section class="card">
+            <label>Admin Key</label>
+            <input id="adminKey" type="password" placeholder="enter admin key" />
+
+            <div class="row">
+                <button id="loginBtn" class="btn">Login</button>
+                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+            </div>
+
+            <!-- Visible only after successful login -->
+            <div id="actions" style="display:none; margin-top:12px">
+                <div class="row">
+                    <a class="btn block" href="/admin-staff.html">Manage staff</a>
+                    <a class="btn block" href="/admin-tickets.html">Manage tickets</a>
+                    <a class="btn" href="admin-accounts.html">Accounts</a>
+
+                </div>
+            </div>
+
+            <pre id="status" class="log"></pre>
+        </section>
+
+        <!-- ===== BLOCK: ADMIN_DASHBOARD_HTML START ===== -->
+        <!-- Dashboard (appears only when logged in) -->
+        <section id="dashboard" class="card" style="display:none">
+            <div class="title">Dashboard</div>
+
+            <!-- KPIs -->
+            <div class="dash-grid">
+                <div class="stat">
+                    <div class="label">Total tickets</div>
+                    <div id="kpiTotal" class="value">—</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Active (Open + Ongoing)</div>
+                    <div id="kpiActive" class="value">—</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Completed</div>
+                    <div id="kpiCompleted" class="value">—</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Urgent / Emergency</div>
+                    <div id="kpiCritical" class="value">—</div>
+                </div>
+            </div>
+
+            <!-- Charts/Breakdowns -->
+            <div class="dash-grid" style="margin-top:12px">
+                <div class="chart">
+                    <div class="title">Tickets by category</div>
+                    <div id="catBars" class="hbars"></div>
+                </div>
+
+                <div class="chart">
+                    <div class="title">Tickets per staff (assigned)</div>
+                    <div id="staffBars" class="hbars"></div>
+                </div>
+
+                <!-- NEW: categories donut -->
+                <div class="chart">
+                    <div class="title">Categories (share)</div>
+                    <div class="donut" id="catDonut">
+                        <svg></svg>
+                        <div class="legend"></div>
+                    </div>
+                </div>
+
+                <!-- NEW: staff workload donut -->
+                <div class="chart">
+                    <div class="title">Staff workload (share of assigned)</div>
+                    <div class="donut" id="staffDonut">
+                        <svg></svg>
+                        <div class="legend"></div>
+                    </div>
+                </div>
+
+                <div class="chart" style="grid-column:1 / -1">
+                    <div class="title">Created (last 14 days)</div>
+
+                    <!-- non-stretching labels wrapper -->
+                    <div class="linewrap">
+                        <svg id="line14" viewBox="0 0 300 180" preserveAspectRatio="none"></svg>
+                        <div class="xlabels"></div>
+                        <div class="ylabels"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- ===== BLOCK: ADMIN_DASHBOARD_HTML END ===== -->
+    </main>
+    <!-- ===== BLOCK: ADMIN_MAIN_CARD END ===== -->
+    <!-- ===== BLOCK: ADMIN_SCRIPT START ===== -->
+    <script>
+        const $ = s => document.querySelector(s);
+        const log = m => { $("#status").textContent = m; };
+
+        function headers() {
+            return { "X-Admin-Key": $("#adminKey").value.trim() };
+        }
+
+        async function checkAuth() {
+            try {
+                const res = await fetch("/api/admin/me", { headers: headers() });
+                return res.ok;
+            } catch { return false; }
+        }
+
+        function setUI(isAuthed) {
+            $("#actions").style.display = isAuthed ? "block" : "none";
+            $("#loginBtn").disabled = isAuthed;
+            $("#logoutBtn").disabled = !isAuthed;
+            $("#dashboard").style.display = isAuthed ? "block" : "none";
+            log(isAuthed ? "Logged in." : "Not logged in.");
+            if (isAuthed) loadDashboard();
+        }
+
+        $("#loginBtn").onclick = async () => {
+            const key = $("#adminKey").value.trim();
+            if (!key) { log("Please enter a key."); return; }
+            localStorage.setItem("adminKey", key);
+            setUI(await checkAuth());
+            if (!(await checkAuth())) log("Invalid key.");
+        };
+
+        $("#logoutBtn").onclick = () => {
+            $("#adminKey").value = "";
+            localStorage.removeItem("adminKey");
+            setUI(false);
+        };
+
+        $("#adminKey").addEventListener("keydown", e => { if (e.key === "Enter") $("#loginBtn").click(); });
+
+        (function init() {
+            const saved = localStorage.getItem("adminKey") || "";
+            $("#adminKey").value = saved;
+            if (saved) checkAuth().then(setUI); else setUI(false);
+        })();
+
+        // ===== BLOCK: ADMIN_DASHBOARD_SCRIPT START =====
+        async function loadDashboard() {
+            try {
+                const [summaryRes, staffRes] = await Promise.all([
+                    fetch('/api/admin/dashboard/summary', { headers: headers() }),
+                    fetch('/api/admin/dashboard/staff', { headers: headers() })
+                ]);
+                if (!summaryRes.ok || !staffRes.ok) {
+                    console.warn('Dashboard fetch failed');
+                    return;
+                }
+                const summary = await summaryRes.json();
+                const staff = await staffRes.json();
+
+                renderKPIs(summary);
+                renderBars('#catBars', objectToPairs(summary.byCategory));
+                renderBars(
+                    '#staffBars',
+                    staff
+                        .map(s => [(`#${s.id} — ${s.name}`), s.totalAssigned])
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 12)
+                );
+                renderLine14('#line14', summary.recent ?? []);
+
+                // ===== NEW: donuts =====
+                renderDonut('#catDonut', objectToPairs(summary.byCategory));
+                const staffPairsAll = staff
+                    .map(s => [`#${s.id} — ${s.name}`, s.totalAssigned])
+                    .sort((a, b) => b[1] - a[1]);
+                const top = staffPairsAll.slice(0, 5);
+                const restTotal = staffPairsAll.slice(5).reduce((a, [, v]) => a + v, 0);
+                if (restTotal > 0) top.push(['Other', restTotal]);
+                renderDonut('#staffDonut', top);
+                // ===== END donuts =====
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function objectToPairs(obj) {
+            return Object.entries(obj || {}).sort((a, b) => b[1] - a[1]);
+        }
+
+        function renderKPIs(s) {
+            const open = s.byStatus?.Open ?? 0;
+            const ongoing = s.byStatus?.Ongoing ?? 0;
+            const completed = s.byStatus?.Completed ?? 0;
+            const urgent = s.byPriority?.Urgent ?? 0;
+            const emergency = s.byPriority?.Emergency ?? 0;
+
+            $('#kpiTotal').textContent = s.total ?? 0;
+            $('#kpiActive').textContent = open + ongoing;
+            $('#kpiCompleted').textContent = completed;
+            $('#kpiCritical').textContent = `${urgent} / ${emergency}`;
+        }
+
+        function renderBars(sel, pairs) {
+            const root = $(sel);
+            root.innerHTML = '';
+            const max = Math.max(1, ...pairs.map(p => p[1]));
+            for (const [label, value] of pairs) {
+                const row = document.createElement('div');
+                row.className = 'row';
+                row.innerHTML = `
+                                    <div class="label">${label}</div>
+                                    <div class="barwrap"><div class="bar" style="width:${(value / max * 100).toFixed(1)}%"></div></div>
+                                    <div class="count">${value}</div>
+                                `;
+                root.appendChild(row);
+            }
+            if (pairs.length === 0) {
+                root.innerHTML = '<div class="muted">No data</div>';
+            }
+        }
+
+        /* ===== responsive line chart with non-stretching labels + dynamic y-axis ===== */
+        let __line14_cache = null;
+        window.addEventListener('resize', () => {
+            if (__line14_cache) renderLine14('#line14', __line14_cache);
+        });
+
+        function niceScale(max, desiredTicks) {
+            if (!isFinite(max) || max <= 0) return { step: 1, max: 4 };
+            const raw = max / (desiredTicks || 4);
+            const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+            const ratio = raw / mag;
+            const nice = ratio > 5 ? 10 : ratio > 2 ? 5 : ratio > 1 ? 2 : 1;
+            const step = nice * mag;
+            const niceMax = Math.ceil(max / step) * step;
+            return { step, max: niceMax };
+        }
+
+        function renderLine14(sel, items) {
+            __line14_cache = items;
+
+            // elements
+            const svgNS = 'http://www.w3.org/2000/svg';
+            const svg = $(sel);
+            const wrap = svg.parentElement;               // .linewrap
+            const xlabels = wrap.querySelector('.xlabels');
+            const ylabels = wrap.querySelector('.ylabels');
+
+            // draw space
+            const W = 300, H = 180, P = 18;
+            const LEFT_GUTTER = 44;   // matches CSS
+            const RIGHT_PAD = 12;
+
+            svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+            svg.innerHTML = '';
+            xlabels.innerHTML = '';
+            ylabels.innerHTML = '';
+
+            if (!items || !items.length) {
+                const t = document.createElementNS(svgNS, 'text');
+                t.setAttribute('x', W / 2);
+                t.setAttribute('y', H / 2);
+                t.setAttribute('text-anchor', 'middle');
+                t.textContent = 'No data';
+                svg.appendChild(t);
+                return;
+            }
+
+            // scales
+            const plotW = W - LEFT_GUTTER - RIGHT_PAD;
+            const stepX = plotW / Math.max(1, items.length - 1);
+            const maxVal = Math.max(1, ...items.map(d => d.created || 0));
+            const ns = niceScale(maxVal, 4);
+            const yMax = ns.max;
+
+            const xAt = i => LEFT_GUTTER + i * stepX;
+            const yAt = v => H - P - (v / yMax) * (H - P * 2);
+
+            // grid
+            const grid = document.createElementNS(svgNS, 'g');
+            grid.setAttribute('class', 'grid');
+            for (let g = 0; g <= 4; g++) {
+                const y = P + (H - P * 2) * (g / 4);
+                const ln = document.createElementNS(svgNS, 'line');
+                ln.setAttribute('x1', LEFT_GUTTER);
+                ln.setAttribute('x2', W - RIGHT_PAD);
+                ln.setAttribute('y1', y);
+                ln.setAttribute('y2', y);
+                grid.appendChild(ln);
+            }
+            svg.appendChild(grid);
+
+            // build points array
+            const pts = items.map((it, i) => ({ x: xAt(i), y: yAt(it.created || 0) }));
+
+            // helper: Catmull-Rom → cubic Bézier path for smooth curve
+            function smoothPath(points, s = 1) {
+                if (points.length < 2) return '';
+                let d = `M ${points[0].x} ${points[0].y}`;
+                for (let i = 0; i < points.length - 1; i++) {
+                    const p0 = i > 0 ? points[i - 1] : points[i];
+                    const p1 = points[i];
+                    const p2 = points[i + 1];
+                    const p3 = i + 2 < points.length ? points[i + 2] : p2;
+
+                    const cp1x = p1.x + (p2.x - p0.x) / 6 * s;
+                    const cp1y = p1.y + (p2.y - p0.y) / 6 * s;
+                    const cp2x = p2.x - (p3.x - p1.x) / 6 * s;
+                    const cp2y = p2.y - (p3.y - p1.y) / 6 * s;
+
+                    d += ` C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${p2.x} ${p2.y}`;
+                }
+                return d;
+            }
+
+            // area
+            const curveD = smoothPath(pts, 1);
+            const first = pts[0], last = pts[pts.length - 1];
+            const area = document.createElementNS(svgNS, 'path');
+            area.setAttribute('d', `${curveD} L ${last.x} ${H - P} L ${first.x} ${H - P} Z`);
+            area.setAttribute('class', 'area');
+            svg.appendChild(area);
+
+            // smooth line (no dots)
+            const path = document.createElementNS(svgNS, 'path');
+            path.setAttribute('d', curveD);
+            path.setAttribute('class', 'line');
+            svg.appendChild(path);
+
+            // X labels (HTML)
+            const n = items.length - 1;
+            const idxs = Array.from(new Set([0, Math.round(n / 3), Math.round(n * 2 / 3), n]))
+                .filter(i => i >= 0 && i < items.length);
+            const toLabel = d => (d || '').slice(5); // "MM-DD"
+            idxs.forEach(i => {
+                const div = document.createElement('div');
+                div.textContent = toLabel(items[i]?.date);
+                xlabels.appendChild(div);
+            });
+
+            // Y labels (HTML)
+            const ticks = [];
+            for (let y = 0; y <= yMax; y += ns.step) ticks.push(y);
+            while (ticks.length < 5) ticks.push(ticks[ticks.length - 1] + ns.step);
+            while (ticks.length > 5) ticks.pop();
+            for (let i = ticks.length - 1; i >= 0; i--) {
+                const div = document.createElement('div');
+                div.textContent = String(ticks[i]);
+                ylabels.appendChild(div);
+            }
+        }
+
+        // ===== DONUT RENDERER (additive) =====
+        function renderDonut(containerSel, pairs) {
+            const wrap = document.querySelector(containerSel);
+            if (!wrap) return;
+            const svg = wrap.querySelector('svg');
+            const legend = wrap.querySelector('.legend');
+            svg.setAttribute('viewBox', '0 0 200 200');
+            svg.innerHTML = '';
+            legend.innerHTML = '';
+
+            const data = (pairs || []).filter(p => (p?.[1] ?? 0) > 0);
+            const total = data.reduce((a, [, v]) => a + v, 0);
+
+            if (!total) {
+                const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                t.setAttribute('x', '100'); t.setAttribute('y', '100');
+                t.setAttribute('text-anchor', 'middle'); t.setAttribute('dominant-baseline', 'middle');
+                t.setAttribute('fill', '#c8d6e5'); t.textContent = 'No data';
+                svg.appendChild(t);
+                legend.innerHTML = '<div class="item"><div class="left"><span class="label muted">No data</span></div><div class="val">0</div></div>';
+                return;
+            }
+
+            const cx = 100, cy = 100, r = 70, stroke = 26;
+            const C = 2 * Math.PI * r;
+            const startRotation = -90;
+            const base = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            base.setAttribute('cx', cx); base.setAttribute('cy', cy); base.setAttribute('r', r);
+            base.setAttribute('fill', 'none'); base.setAttribute('stroke', '#12202e'); base.setAttribute('stroke-width', stroke);
+            svg.appendChild(base);
+
+            const colors = ['#07b6d5', '#f97316', '#ef4444', '#22c55e', '#a78bfa', '#eab308', '#06b6d4', '#f43f5e', '#14b8a6', '#fb7185'];
+
+            let acc = 0;
+            data.forEach(([label, value], i) => {
+                const ratio = value / total;
+                const slice = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                slice.setAttribute('cx', cx); slice.setAttribute('cy', cy); slice.setAttribute('r', r);
+                slice.setAttribute('fill', 'none');
+                slice.setAttribute('stroke', colors[i % colors.length]);
+                slice.setAttribute('stroke-width', stroke);
+                slice.setAttribute('stroke-linecap', 'butt');
+                slice.setAttribute('transform', `rotate(${startRotation} ${cx} ${cy})`);
+                slice.setAttribute('stroke-dasharray', `${C * ratio} ${C * (1 - ratio)}`);
+                slice.setAttribute('stroke-dashoffset', `${-acc}`);
+                svg.appendChild(slice);
+                acc += C * ratio;
+
+                const pct = Math.round((value / total) * 100);
+                const row = document.createElement('div');
+                row.className = 'item';
+                row.innerHTML = `
+                              <div class="left">
+                                <span class="swatch" style="background:${colors[i % colors.length]}"></span>
+                                <span class="label">${label}</span>
+                              </div>
+                              <div class="val">${value} (${pct}%)</div>`;
+                legend.appendChild(row);
+            });
+
+            const center = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            center.setAttribute('x', cx); center.setAttribute('y', cy);
+            center.setAttribute('text-anchor', 'middle'); center.setAttribute('dominant-baseline', 'middle');
+            center.setAttribute('fill', '#c8d6e5'); center.setAttribute('font-size', '18'); center.setAttribute('font-weight', '700');
+            center.textContent = total.toString();
+            svg.appendChild(center);
+        }
+        // ===== BLOCK: ADMIN_DASHBOARD_SCRIPT END =====
+    </script>
+    <!-- ===== BLOCK: ADMIN_SCRIPT END ===== -->
+</body>
+</html>

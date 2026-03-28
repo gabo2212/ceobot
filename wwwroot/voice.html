@@ -1,0 +1,727 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>CEObot — Voice Intake</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="css/site.css" />
+
+    <style>
+        /* ==== UNCERTAINTY BADGES ==== */
+        .unc-wrap {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-left: auto;
+        }
+
+        .unc-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 54px;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 12px;
+            line-height: 1;
+            border: 1px solid rgba(255,255,255,.15);
+            background: rgba(255,255,255,.06);
+            color: #cde;
+            user-select: none;
+        }
+
+            .unc-pill.badge {
+                min-width: 28px;
+            }
+
+            .unc-pill.ok {
+                color: #b7f5c7;
+                border-color: #2b7a46;
+                background: #123a22;
+            }
+
+            .unc-pill.warn {
+                color: #ffe8a6;
+                border-color: #7a5d2b;
+                background: #3a2a12;
+            }
+
+            .unc-pill.bad {
+                color: #ffc9c9;
+                border-color: #7a2b2b;
+                background: #3a1212;
+            }
+        /* ============================ */
+
+        .page {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            background: rgba(255,255,255,.04);
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin: 10px 0;
+        }
+
+        .btn {
+            background: #08a4bd;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+            .btn[disabled] {
+                opacity: .5;
+                cursor: not-allowed;
+            }
+
+        .muted {
+            opacity: .7;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: rgba(0,0,0,.25);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,.08);
+        }
+
+        .kv {
+            display: grid;
+            grid-template-columns: 160px 1fr;
+            gap: 6px 14px;
+        }
+
+            .kv .k {
+                opacity: .75;
+            }
+
+        /* simple inline banner for environment/errors */
+        .banner {
+            display: none;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin: 8px 0;
+            border: 1px solid rgba(255,255,255,.15);
+            background: rgba(255,80,80,.12);
+            color: #ffd6d6;
+            font-weight: 600;
+        }
+
+            .banner.show {
+                display: block;
+            }
+
+        .notify-block {
+            margin-top: 14px;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,.1);
+            background: rgba(255,255,255,.03);
+            display: grid;
+            gap: 10px;
+        }
+
+        .notify-inline {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .notify-inline input[type="email"] {
+            flex: 1;
+            min-width: 240px;
+            background: #0b1323;
+            border: 1px solid #1f2438;
+            color: #fff;
+            padding: 8px 10px;
+            border-radius: 8px;
+        }
+
+        .notify-inline label {
+            font-size: 14px;
+            gap: 6px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .notify-status {
+            font-size: 12px;
+        }
+
+        .notify-status.ok { color: #b7f5c7; }
+        .notify-status.warn { color: #ffe8a6; }
+        .notify-status.err { color: #ffc9c9; }
+
+        .btn.small {
+            padding: 6px 10px;
+            font-size: 13px;
+        }
+
+        .hide { display: none !important; }
+    </style>
+</head>
+<body>
+    <div id="appHeader"></div>
+
+    <main class="page">
+        <h1>Voice Intake</h1>
+
+        <div id="envBanner" class="banner"></div>
+
+        <div class="card">
+            <div class="row">
+                <div class="row" style="gap:8px">
+                    <button id="btnStart" class="btn">Start recording</button>
+                    <button id="btnStop" class="btn" disabled>Stop</button>
+                    <button id="btnPreview" class="btn" disabled>Preview only</button>
+                    <button id="btnCreate" class="btn" disabled>Transcribe &amp; Create</button>
+                </div>
+                <div style="margin-left:auto; align-self:center" class="muted">
+                    Format: prefers <code>audio/webm;codecs=opus</code>
+                </div>
+            </div>
+
+            <div class="notify-block">
+                <div class="notify-inline">
+                    <label for="notifyEmail" style="font-weight:600; margin-right:6px;">Email me a copy</label>
+                    <input id="notifyEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+                    <button id="notifySaveAccount" class="btn small hide" type="button">Save</button>
+                </div>
+                <div class="notify-inline" style="gap:16px;">
+                    <label id="notifyRememberWrap"><input type="checkbox" id="notifyRemember" /> Save for next time</label>
+                    <label id="notifyAccountWrap" class="hide"><input type="checkbox" id="notifyUseAccount" /> Use my account email</label>
+                </div>
+                <div id="notifyStatus" class="notify-status muted">Enter an email to get a copy of the ticket.</div>
+            </div>
+        </div>
+
+        <!-- Preview (Parsed) -->
+        <div class="card">
+            <div class="row" style="align-items:center">
+                <h2 style="margin:0">Preview (Parsed)</h2>
+
+                <!-- ==== UNCERTAINTY BADGES ==== -->
+                <div class="unc-wrap" title="Uncertainty score. Hover for reasons.">
+                    <div id="uncScore" class="unc-pill">SC — 0.00</div>
+                    <div id="uncBadge" class="unc-pill badge ok" title="OK">✓</div>
+                </div>
+                <!-- =========================== -->
+            </div>
+
+            <div class="kv" style="margin-top:10px">
+                <div class="k">Name</div>           <div id="outName">—</div>
+                <div class="k">Unit / Address</div> <div id="outUA">—</div>
+                <div class="k">Contact</div>        <div id="outContact">—</div>
+            </div>
+
+            <div style="margin-top:10px">
+                <div class="k">Description</div>
+                <div id="outDesc" class="muted">—</div>
+            </div>
+
+            <div style="margin-top:12px">
+                <button id="btnCreate2" class="btn" disabled>Create Ticket</button>
+            </div>
+        </div>
+
+        <!-- Debug -->
+        <details class="card">
+            <summary><strong>▼ Debug</strong> <span class="muted">(what the server returned)</span></summary>
+            <div style="margin-top:12px">
+                <div class="k">Raw Transcription Text</div>
+                <pre id="rawText" class="muted"></pre>
+            </div>
+            <div style="margin-top:8px">
+                <div class="k">/api/voice/transcribe (JSON)</div>
+                <pre id="rawJson" class="muted"></pre>
+            </div>
+
+            <!-- DEBUG: quick text-parse tester -->
+            <div style="margin-top:18px">
+                <div class="k">Quick test without audio (POST /api/voice/parse)</div>
+                <textarea id="dbgText" rows="5" style="width:100%;"></textarea>
+                <div class="row" style="margin-top:8px">
+                    <button id="btnDbgParse" class="btn">Parse this text</button>
+                    <span class="muted">Use this to quickly try hard cases without recording.</span>
+                </div>
+            </div>
+        </details>
+    </main>
+
+    <script src="header.js"></script>
+    <script>
+        // --- Safe header load; don't let a missing header.js kill the page ---
+        try { if (typeof renderHeader === 'function') renderHeader('voice'); }
+        catch (e) { console.warn('header.js not loaded / renderHeader missing', e); }
+
+        const el = (id) => document.getElementById(id);
+        const banner = el('envBanner');
+
+        const notifyEmail = el('notifyEmail');
+        const notifyRemember = el('notifyRemember');
+        const notifyRememberWrap = el('notifyRememberWrap');
+        const notifyAccountWrap = el('notifyAccountWrap');
+        const notifyUseAccount = el('notifyUseAccount');
+        const notifyStatus = el('notifyStatus');
+        const notifySaveAccount = el('notifySaveAccount');
+
+        const notifyStorageEmail = 'ceobot.voice.notify.email';
+        const notifyStorageRemember = 'ceobot.voice.notify.remember';
+
+        const authState = {
+            isLoggedIn: false,
+            useAccountEmail: false,
+            prefs: null
+        };
+
+        function setNotifyStatus(msg, tone = 'muted') {
+            if (!notifyStatus) return;
+            notifyStatus.textContent = msg || '';
+            notifyStatus.className = `notify-status ${tone}`;
+        }
+
+        function isValidEmail(email) {
+            return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+        }
+
+        function loadGuestPrefs() {
+            if (!notifyEmail || !notifyRemember) return;
+            const remember = localStorage.getItem(notifyStorageRemember) === '1';
+            notifyRemember.checked = remember;
+            if (remember) {
+                notifyEmail.value = localStorage.getItem(notifyStorageEmail) || '';
+            } else {
+                notifyEmail.value = '';
+            }
+        }
+
+        function storeGuestPrefs() {
+            if (!notifyEmail || !notifyRemember) return;
+            if (notifyRemember.checked) {
+                localStorage.setItem(notifyStorageRemember, '1');
+                const email = (notifyEmail.value || '').trim();
+                if (isValidEmail(email)) {
+                    localStorage.setItem(notifyStorageEmail, email);
+                }
+            } else {
+                localStorage.removeItem(notifyStorageRemember);
+                localStorage.removeItem(notifyStorageEmail);
+            }
+        }
+
+        async function loadAuthState() {
+            authState.isLoggedIn = false;
+            authState.prefs = null;
+            authState.useAccountEmail = false;
+
+            try {
+                const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
+                if (!res.ok) {
+                    renderNotifyUI();
+                    return;
+                }
+                const data = await res.json().catch(() => null);
+                if (!data || !data.id) {
+                    renderNotifyUI();
+                    return;
+                }
+                authState.isLoggedIn = true;
+            } catch {
+                renderNotifyUI();
+                return;
+            }
+
+            try {
+                const prefsRes = await fetch('/api/auth/prefs', { credentials: 'same-origin' });
+                if (prefsRes.ok) {
+                    authState.prefs = await prefsRes.json().catch(() => null);
+                    authState.useAccountEmail = !!authState.prefs?.notifyVoiceEnabled;
+                }
+            } catch {
+                authState.prefs = null;
+                authState.useAccountEmail = false;
+            }
+
+            renderNotifyUI();
+        }
+
+        function renderNotifyUI() {
+            if (!notifyEmail) return;
+
+            if (authState.isLoggedIn) {
+                notifyRememberWrap?.classList.add('hide');
+                notifySaveAccount?.classList.remove('hide');
+                notifyAccountWrap?.classList.remove('hide');
+
+                const email = authState.prefs?.notifyEmail || '';
+                notifyEmail.value = email;
+
+                const enabled = !!authState.prefs?.notifyVoiceEnabled;
+                authState.useAccountEmail = enabled;
+                notifyUseAccount.checked = enabled;
+
+                if (!email) {
+                    setNotifyStatus('Add an email, then enable the toggle to save it to your account.', 'warn');
+                } else if (enabled) {
+                    setNotifyStatus(`Copies will be sent to ${email}.`, 'ok');
+                } else {
+                    setNotifyStatus('Toggle “Use my account email” to send yourself a copy automatically.', 'muted');
+                }
+            } else {
+                notifyRememberWrap?.classList.remove('hide');
+                notifySaveAccount?.classList.add('hide');
+                notifyAccountWrap?.classList.add('hide');
+                authState.useAccountEmail = false;
+                notifyUseAccount.checked = false;
+                loadGuestPrefs();
+                if ((notifyEmail.value || '').trim()) {
+                    setNotifyStatus('This address will be included on your next ticket.', 'ok');
+                } else {
+                    setNotifyStatus('Enter an email to get a copy of the ticket.', 'muted');
+                }
+            }
+        }
+
+        async function saveAccountPrefs(payload) {
+            const res = await fetch('/api/auth/prefs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json().catch(() => null);
+            return { ok: res.ok, status: res.status, data };
+        }
+
+        async function handleAccountToggle() {
+            if (!authState.isLoggedIn || !notifyUseAccount) return;
+
+            const enable = notifyUseAccount.checked;
+            const email = (notifyEmail?.value || '').trim();
+
+            if (enable) {
+                if (!isValidEmail(email)) {
+                    setNotifyStatus('Enter a valid email before enabling.', 'err');
+                    notifyUseAccount.checked = false;
+                    notifyEmail?.focus();
+                    return;
+                }
+
+                setNotifyStatus('Saving account preference…', 'muted');
+                notifyUseAccount.disabled = true;
+                const res = await saveAccountPrefs({ notifyEmail: email, notifyVoiceEnabled: true });
+                notifyUseAccount.disabled = false;
+                if (!res.ok) {
+                    notifyUseAccount.checked = false;
+                    setNotifyStatus(res.data?.error || `Failed to save (${res.status})`, 'err');
+                    return;
+                }
+
+                authState.prefs = res.data;
+                authState.useAccountEmail = !!res.data?.notifyVoiceEnabled;
+                renderNotifyUI();
+                if (authState.prefs?.notifyEmail) {
+                    setNotifyStatus(`Copies will be sent to ${authState.prefs.notifyEmail}.`, 'ok');
+                } else {
+                    setNotifyStatus('Account notifications enabled.', 'ok');
+                }
+            } else {
+                setNotifyStatus('Saving account preference…', 'muted');
+                notifyUseAccount.disabled = true;
+                const res = await saveAccountPrefs({ notifyVoiceEnabled: false });
+                notifyUseAccount.disabled = false;
+                if (!res.ok) {
+                    notifyUseAccount.checked = true;
+                    setNotifyStatus(res.data?.error || `Failed to update (${res.status})`, 'err');
+                    return;
+                }
+
+                authState.prefs = res.data;
+                authState.useAccountEmail = false;
+                renderNotifyUI();
+                setNotifyStatus('Account notifications disabled for voice submissions.', 'warn');
+            }
+        }
+
+        // Environment / feature checks
+        (function envChecks() {
+            // Media APIs: warn early, but still let Debug tester work.
+            const msgs = [];
+            if (!isSecureContext && !/^localhost(:\d+)?$/i.test(location.host))
+                msgs.push('Microphone requires HTTPS or localhost.');
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)
+                msgs.push('This browser context has no getUserMedia (mic).');
+            if (!('MediaRecorder' in window))
+                msgs.push('MediaRecorder is not supported here. Try Chrome/Edge/Firefox.');
+
+            if (msgs.length) {
+                banner.textContent = msgs.join(' ');
+                banner.classList.add('show');
+            }
+        })();
+
+        // Buttons / outputs
+        const btnStart = el('btnStart');
+        const btnStop = el('btnStop');
+        const btnPreview = el('btnPreview');
+        const btnCreate = el('btnCreate');
+        const btnCreate2 = el('btnCreate2');
+
+        const outName = el('outName');
+        const outUA = el('outUA');
+        const outContact = el('outContact');
+        const outDesc = el('outDesc');
+        const rawText = el('rawText');
+        const rawJson = el('rawJson');
+
+        const uncScore = el('uncScore');
+        const uncBadge = el('uncBadge');
+
+        renderNotifyUI();
+        loadAuthState();
+
+        notifyEmail?.addEventListener('input', () => {
+            if (!authState.isLoggedIn && notifyRemember?.checked) storeGuestPrefs();
+            if (!authState.isLoggedIn) {
+                const email = (notifyEmail.value || '').trim();
+                setNotifyStatus(email ? 'This address will be included on your next ticket.' : 'Enter an email to get a copy of the ticket.', email ? 'ok' : 'muted');
+            }
+        });
+
+        notifyEmail?.addEventListener('blur', () => {
+            if (!authState.isLoggedIn && notifyRemember?.checked) storeGuestPrefs();
+        });
+
+        notifyRemember?.addEventListener('change', () => {
+            storeGuestPrefs();
+            if (!authState.isLoggedIn) renderNotifyUI();
+        });
+
+        notifySaveAccount?.addEventListener('click', async () => {
+            if (!authState.isLoggedIn) return;
+            const email = (notifyEmail?.value || '').trim();
+            if (!isValidEmail(email)) {
+                setNotifyStatus('Enter a valid email before saving.', 'err');
+                notifyEmail?.focus();
+                return;
+            }
+
+            setNotifyStatus('Saving account email…', 'muted');
+            notifySaveAccount.disabled = true;
+            const payload = { notifyEmail: email };
+            if (authState.useAccountEmail || notifyUseAccount?.checked) {
+                payload.notifyVoiceEnabled = true;
+            }
+
+            const res = await saveAccountPrefs(payload);
+            notifySaveAccount.disabled = false;
+            if (!res.ok) {
+                setNotifyStatus(res.data?.error || `Failed to save (${res.status})`, 'err');
+                return;
+            }
+
+            authState.prefs = res.data;
+            authState.useAccountEmail = !!res.data?.notifyVoiceEnabled;
+            notifyUseAccount.checked = authState.useAccountEmail;
+            renderNotifyUI();
+            setNotifyStatus('Account email updated.', 'ok');
+        });
+
+        notifyUseAccount?.addEventListener('change', () => {
+            handleAccountToggle().catch(err => console.error('notify toggle', err));
+        });
+
+        let mediaRecorder, chunks = [], lastBlob = null;
+
+        function setBusy(on) {
+            btnStart.disabled = on;
+            btnStop.disabled = !on;
+            btnPreview.disabled = on;
+            btnCreate.disabled = on || !lastBlob;
+        }
+
+        // Figure best mime type for this browser
+        function pickMime() {
+            const opus = 'audio/webm;codecs=opus';
+            if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(opus)) return opus;
+            return ''; // let browser choose default
+        }
+
+        btnStart.onclick = async () => {
+            chunks = []; lastBlob = null;
+            outName.textContent = outUA.textContent = outContact.textContent = '—';
+            outDesc.textContent = '—';
+            rawText.textContent = rawJson.textContent = '';
+            renderUncertainty(null);
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const mime = pickMime();
+                mediaRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = e => e.data && e.data.size && chunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    // some browsers don't expose mime; force a sensible default container
+                    const type = (mime || 'audio/webm');
+                    lastBlob = new Blob(chunks, { type });
+                    btnPreview.disabled = false;
+                    btnCreate.disabled = false;
+                    btnCreate2.disabled = false;
+                };
+                mediaRecorder.start();
+                setBusy(true);
+            } catch (err) {
+                console.error(err);
+                alert('Could not access microphone: ' + (err.message || err));
+            }
+        };
+
+        btnStop.onclick = () => {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                setBusy(false);
+            }
+        };
+
+        // Send recorded audio to an endpoint
+        async function postAudio(endpoint, includeNotify = false) {
+            if (!lastBlob) { alert('No audio recorded'); return; }
+            const fd = new FormData();
+            fd.append('audio', lastBlob, 'voice.webm');
+
+            if (includeNotify) {
+                if (authState.isLoggedIn && authState.useAccountEmail) {
+                    fd.append('notifyMe', 'true');
+                } else {
+                    const email = (notifyEmail?.value || '').trim();
+                    if (email) {
+                        if (!isValidEmail(email)) {
+                            setNotifyStatus('Enter a valid email before submitting.', 'err');
+                            throw new Error('Invalid email address');
+                        }
+                        fd.append('notifyEmail', email);
+                        if (!authState.isLoggedIn && notifyRemember?.checked) {
+                            localStorage.setItem(notifyStorageRemember, '1');
+                            localStorage.setItem(notifyStorageEmail, email);
+                        }
+                    }
+                }
+            }
+            const res = await fetch(endpoint, { method: 'POST', body: fd });
+            const json = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(json?.error || `Request failed (${res.status})`);
+            return json;
+        }
+
+        function renderPreview(json) {
+            const p = json.parsed || {};
+            outName.textContent = p.name || '—';
+            outUA.textContent = buildUA(p.unit, p.address) || '—';
+            outContact.textContent = p.contact || '—';
+            outDesc.textContent = p.description || json.text || '—';
+
+            rawText.textContent = json.text || '';
+            rawJson.textContent = JSON.stringify(json, null, 2);
+
+            renderUncertainty(json.uncertainty);
+
+            if (json.id && Array.isArray(json.notifications)) {
+                const sentCount = json.notifications.filter(x => x.sent).length;
+                if (sentCount > 0) {
+                    setNotifyStatus(`Email copy sent to ${sentCount} recipient${sentCount > 1 ? 's' : ''}.`, 'ok');
+                } else if (json.notificationAttempted > 0) {
+                    setNotifyStatus('Email copy could not be delivered.', 'warn');
+                }
+            } else if (json.id && json.notificationAttempted > 0) {
+                setNotifyStatus('Email copy requested but no valid address was available.', 'warn');
+            }
+        }
+
+        function buildUA(unit, address) {
+            unit = (unit || '').trim();
+            address = (address || '').trim();
+            if (unit && address) return `${unit} — ${address}`;
+            return unit || address || '';
+        }
+
+        // Uncertainty badge renderer
+        function renderUncertainty(u) {
+            if (!u || typeof u.score !== 'number') {
+                uncScore.textContent = 'SC — 0.00';
+                uncScore.className = 'unc-pill';
+                uncScore.title = 'No score';
+                uncBadge.textContent = '–';
+                uncBadge.className = 'unc-pill badge';
+                uncBadge.title = 'No signal';
+                return;
+            }
+            const score = Math.max(0, Math.min(1, u.score));
+            uncScore.textContent = `SC — ${score.toFixed(2)}`;
+            const reasons = Array.isArray(u.reasons) && u.reasons.length ? u.reasons.join(', ') : 'no reasons';
+            uncScore.title = `uncertainty: ${score.toFixed(2)} • ${reasons}`;
+
+            let cls = 'ok', glyph = '✓', title = 'Looks good';
+            if (score >= 0.5) { cls = 'bad'; glyph = '✕'; title = 'Needs review'; }
+            else if (score >= 0.35) { cls = 'warn'; glyph = '•'; title = 'Borderline'; }
+
+            uncScore.className = `unc-pill ${cls}`;
+            uncBadge.textContent = glyph;
+            uncBadge.className = `unc-pill badge ${cls}`;
+            uncBadge.title = title;
+        }
+
+        // Preview only
+        btnPreview.onclick = async () => {
+            try {
+                const json = await postAudio('/api/voice/transcribe');
+                renderPreview(json);
+            } catch (e) { alert(e.message || e); }
+        };
+
+        // One-shot create
+        btnCreate.onclick = async () => {
+            try {
+                const json = await postAudio('/api/voice', true);
+                renderPreview(json);
+                alert(`Ticket #${json.id} created. Category=${json.category}, Priority=${json.priority}${json.needsReview ? ' (Needs review)' : ''}`);
+            } catch (e) {
+                if (e?.message === 'Invalid email address') return;
+                alert(e.message || e);
+            }
+        };
+
+        btnCreate2.onclick = btnCreate.onclick;
+
+        // DEBUG: quick text-parse tester
+        el('btnDbgParse').onclick = async () => {
+            const text = (el('dbgText').value || '').trim();
+            if (!text) { alert('Enter some text'); return; }
+            const res = await fetch('/api/voice/parse', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text })
+            });
+            const json = await res.json().catch(() => ({}));
+            if (!res.ok) { alert(json?.error || 'Parse failed'); return; }
+            renderPreview(json);
+        };
+    </script>
+</body>
+</html>

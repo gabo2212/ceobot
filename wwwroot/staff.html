@@ -1,0 +1,342 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Staff Portal</title>
+    <link rel="stylesheet" href="/css/site.css" />
+    <style>
+        /* minimal layout helpers; keeps consistent with your dark theme */
+        .wrap {
+            max-width: 1200px;
+            margin: 32px auto;
+            padding: 0 16px
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px
+        }
+
+        .card {
+            background: #0f1720;
+            border: 1px solid #182230;
+            border-radius: 12px;
+            padding: 16px
+        }
+
+        .muted {
+            opacity: .8;
+            font-size: .9rem
+        }
+
+        .stack {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+
+        .input {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #233142;
+            background: #0b1116;
+            color: #e7f3ff
+        }
+
+        .btn {
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 0;
+            background: #07b6d5;
+            color: #001018;
+            font-weight: 600;
+            cursor: pointer
+        }
+
+            .btn.ghost {
+                background: #182230;
+                color: #e7f3ff
+            }
+
+            .btn.small {
+                padding: 6px 10px;
+                border-radius: 8px
+            }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid #304256;
+            font-size: .75rem
+        }
+
+        .title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 8px
+        }
+
+        .list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px
+        }
+
+        .ticket {
+            border: 1px solid #1f2b36;
+            border-radius: 12px;
+            padding: 12px;
+            background: #0c131a
+        }
+
+            .ticket .hdr {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-wrap: wrap;
+                margin-bottom: 6px
+            }
+
+            .ticket .desc {
+                white-space: pre-wrap
+            }
+
+        .grid2 {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            align-items: center
+        }
+
+        pre.log {
+            height: 140px;
+            overflow: auto;
+            background: #0b1116;
+            border: 1px solid #1c2a37;
+            border-radius: 10px;
+            padding: 10px;
+            margin: 0
+        }
+
+        @media (max-width:900px) {
+            .row {
+                grid-template-columns: 1fr
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div id="site-header"></div>
+        <script src="/js/header.js" defer></script>
+        <h1>Staff Portal</h1>
+
+        <!-- Credentials -->
+        <div class="card">
+            <div class="grid2">
+                <div class="stack" style="width:100%">
+                    <div style="flex:1;min-width:220px">
+                        <div class="muted">Staff ID</div>
+                        <input id="staffId" class="input" placeholder="e.g. 2" />
+                    </div>
+                    <div style="flex:2;min-width:320px">
+                        <div class="muted">Access Key</div>
+                        <input id="accessKey" class="input" placeholder="paste your access key…" />
+                    </div>
+                </div>
+                <div class="stack">
+                    <button id="btnSave" class="btn">Save</button>
+                    <button id="btnRefresh" class="btn ghost">Refresh</button>
+                </div>
+            </div>
+            <div class="muted" style="margin-top:8px">Tip: the ID+Key are stored locally in your browser only.</div>
+            <div style="margin-top:12px">
+                <pre id="log" class="log"></pre>
+            </div>
+        </div>
+
+        <!-- Ticket columns -->
+        <div class="row" style="margin-top:16px">
+            <div class="card">
+                <div class="title">Unassigned <span class="muted">(for your roles)</span></div>
+                <div id="unassignedList" class="list"></div>
+            </div>
+
+            <div class="card">
+                <div class="title">My Tickets <span class="muted">(ongoing / assigned)</span></div>
+                <div id="mineList" class="list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ---------- Utilities ----------
+        const $ = (id) => document.getElementById(id);
+        const idEl = $('staffId');
+        const keyEl = $('accessKey');
+        const logEl = $('log');
+        const unassignedEl = $('unassignedList');
+        const mineEl = $('mineList');
+
+        function log(msg) { logEl.textContent += msg + "\n"; logEl.scrollTop = logEl.scrollHeight; }
+
+        function getCreds() {
+            const id = (idEl.value || "").trim();
+            const key = (keyEl.value || "").trim();
+            return { id, key };
+        }
+
+        function staffHeaders() {
+            const { key } = getCreds();
+            return key ? { 'X-Staff-Key': key } : {};
+        }
+
+
+        async function jsonFetch(url, opts = {}) {
+            const r = await fetch(url, opts);
+            if (!r.ok) {
+                const text = await r.text().catch(() => "(no body)");
+                throw new Error(`HTTP ${r.status} - ${text}`);
+            }
+            const ct = r.headers.get('content-type') || "";
+            return ct.includes("application/json") ? r.json() : null;
+        }
+
+        // ---------- Render ----------
+        function renderList(container, items, mode) {
+            container.innerHTML = "";
+            if (!items || !items.length) {
+                container.innerHTML = `<div class="muted">No tickets.</div>`;
+                return;
+            }
+            for (const t of items) {
+                const el = document.createElement('div');
+                el.className = 'ticket';
+                const hdr = document.createElement('div');
+                hdr.className = 'hdr';
+                hdr.innerHTML = `
+              <span class="tag">#${t.id}</span>
+              ${t.category ? `<span class="tag">${t.category}</span>` : ``}
+              ${t.priority ? `<span class="tag">${t.priority}</span>` : ``}
+              ${t.status ? `<span class="tag">${t.status}</span>` : ``}
+             <span class="muted">
+  ${(t.tenantName || '').trim()}
+  ${(t.unit || '') ? '• ' + t.unit : ''}
+  ${t.contact ? ('• ' + t.contact) : ''}
+</span>
+
+            `;
+                const desc = document.createElement('div');
+                desc.className = 'desc';
+                desc.textContent = t.description || "";
+
+                const actions = document.createElement('div');
+                actions.className = 'stack';
+                if (mode === 'unassigned') {
+                    const b = document.createElement('button');
+                    b.className = 'btn small';
+                    b.textContent = 'Claim';
+                    b.onclick = () => claim(t.id);
+                    actions.appendChild(b);
+                } else if (mode === 'mine') {
+                    const b = document.createElement('button');
+                    b.className = 'btn small';
+                    b.textContent = 'Mark Completed';
+                    b.onclick = () => complete(t.id);
+                    actions.appendChild(b);
+                }
+
+                el.appendChild(hdr);
+                el.appendChild(desc);
+                el.appendChild(document.createElement('div')).style.height = '8px';
+                el.appendChild(actions);
+                container.appendChild(el);
+            }
+        }
+
+        // ---------- API calls ----------
+        async function checkLogin(id, key) {
+            try {
+                const res = await jsonFetch('/api/staff/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: Number(id), key })
+                });
+                log(`login 200 (name: ${res.name || 'n/a'})`);
+            } catch (err) {
+                log('login failed: ' + err.message);
+            }
+        }
+
+        async function loadUnassigned(id, key) {
+            try {
+                const data = await jsonFetch(`/api/staff/${id}/unassigned`, { headers: staffHeaders() });
+                log('unassigned 200');
+                renderList(unassignedEl, data, 'unassigned');
+            } catch (err) {
+                log('unassigned error: ' + err.message);
+                renderList(unassignedEl, [], 'unassigned');
+            }
+        }
+
+        async function loadMine(id, key) {
+            try {
+                const data = await jsonFetch(`/api/staff/${id}/mine`, { headers: staffHeaders() });
+                log('mine 200');
+                renderList(mineEl, data, 'mine');
+            } catch (err) {
+                log('mine error: ' + err.message);
+                renderList(mineEl, [], 'mine');
+            }
+        }
+
+        async function refresh() {
+            const { id, key } = getCreds();
+            if (!id || !key) { log('enter ID and Key then click Save.'); return; }
+            await checkLogin(id, key);
+            await loadUnassigned(id, key);
+            await loadMine(id, key);
+        }
+
+        async function claim(tid) {
+            const { id, key } = getCreds();
+            try {
+                await jsonFetch(`/api/staff/${id}/claim/${tid}`, { method: 'POST', headers: staffHeaders() });
+                log(`claim ${tid} 200`);
+                await refresh();
+            } catch (err) {
+                log(`claim ${tid} error: ${err.message}`);
+            }
+        }
+
+        async function complete(tid) {
+            const { id, key } = getCreds();
+            try {
+                await jsonFetch(`/api/staff/${id}/complete/${tid}`, { method: 'POST', headers: staffHeaders() });
+                log(`complete ${tid} 200`);
+                await refresh();
+            } catch (err) {
+                log(`complete ${tid} error: ${err.message}`);
+            }
+        }
+
+        // ---------- Wire up ----------
+        $('btnSave').onclick = () => {
+            localStorage.setItem('staffId', (idEl.value || '').trim());
+            localStorage.setItem('staffKey', (keyEl.value || '').trim());
+            log('saved');
+            refresh();
+        };
+        $('btnRefresh').onclick = refresh;
+
+        // restore saved
+        idEl.value = localStorage.getItem('staffId') || '';
+        keyEl.value = localStorage.getItem('staffKey') || '';
+        if (idEl.value && keyEl.value) refresh();
+    </script>
+</body>
+</html>

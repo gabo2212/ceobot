@@ -1,0 +1,693 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>CEObot — Debug & Self-Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="css/site.css" />
+    <style>
+        :root {
+            --ok: #28c76f;
+            --warn: #ff9f43;
+            --err: #ea5455;
+            --muted: #9aa4b2;
+            --fg: #e5e7eb;
+            --bg: #0f172a;
+            --card: #111827;
+            --chip: #1f2937
+        }
+
+        body {
+            background: #0b1220;
+            color: var(--fg)
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 24px auto;
+            padding: 0 16px
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: .2px;
+            margin: 6px 0 16px
+        }
+
+        .desc {
+            color: #9aa4b2;
+            margin-bottom: 18px
+        }
+
+        .panel {
+            background: var(--card);
+            border: 1px solid #1f2937;
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 6px 24px rgba(0,0,0,.25)
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center
+        }
+
+            .row > * {
+                flex: 0 0 auto
+            }
+
+        .input {
+            background: #0b1323;
+            border: 1px solid #1f2438;
+            color: var(--fg);
+            border-radius: 10px;
+            padding: 8px 10px;
+            min-width: 220px
+        }
+
+        .btn {
+            background: #1f2937;
+            border: 1px solid #2b3547;
+            color: #e5e7eb;
+            padding: 9px 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: .15s transform ease,.15s background ease
+        }
+
+            .btn:hover {
+                background: #273246;
+                transform: translateY(-1px)
+            }
+
+            .btn.primary {
+                background: #2b5cff;
+                border-color: #2b5cff
+            }
+
+            .btn.destructive {
+                background: #5a1a1f;
+                border-color: #7c1e25
+            }
+
+        .stat {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #0e1527;
+            border: 1px solid #1d2741;
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-weight: 700
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%
+        }
+
+        .ok {
+            color: var(--ok)
+        }
+
+        .err {
+            color: var(--err)
+        }
+
+        .warn {
+            color: var(--warn)
+        }
+
+        .muted {
+            color: var(--muted)
+        }
+
+        .ok .dot {
+            background: var(--ok)
+        }
+
+        .err .dot {
+            background: var(--err)
+        }
+
+        .warn .dot {
+            background: var(--warn)
+        }
+
+        .muted .dot {
+            background: var(--muted)
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(12,1fr);
+            gap: 12px
+        }
+
+        .col-12 {
+            grid-column: span 12
+        }
+
+        .col-6 {
+            grid-column: span 6
+        }
+
+        .col-4 {
+            grid-column: span 4
+        }
+
+        .col-3 {
+            grid-column: span 3
+        }
+
+        @media (max-width:900px) {
+            .col-6, .col-4 {
+                grid-column: span 12
+            }
+
+            .col-3 {
+                grid-column: span 6
+            }
+        }
+
+        .card {
+            background: #0c1324;
+            border: 1px solid #1b2540;
+            border-radius: 14px;
+            padding: 14px
+        }
+
+            .card h4 {
+                margin: 0 0 8px;
+                font-size: 15px;
+                letter-spacing: .2px
+            }
+
+        .status-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+            background: var(--chip);
+            border: 1px solid #2a3552
+        }
+
+        .kvs {
+            display: grid;
+            grid-template-columns: max-content 1fr;
+            gap: 6px 10px;
+            font-size: 12px;
+            color: #a3adc2;
+            margin-top: 8px
+        }
+
+            .kvs .k {
+                color: #7e8aaa
+            }
+
+        .log {
+            margin-top: 10px;
+            background: #0b1020;
+            border: 1px dashed #213055;
+            padding: 10px;
+            border-radius: 10px;
+            font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+            font-size: 12px;
+            color: #c7d2fe;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow: auto
+        }
+
+        .bad {
+            color: #ffb4b4
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: space-between
+        }
+
+        .pill {
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #0e1527;
+            border: 1px solid #1d2741;
+            font-size: 12px
+        }
+
+        .small {
+            font-size: 12px;
+            color: #9aa4b2
+        }
+
+        .notice {
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: #0e1527;
+            border: 1px solid #1d2741;
+            margin: 8px 0 16px;
+            font-size: 12px
+        }
+    </style>
+    <script defer src="header.js"></script>
+</head>
+<body>
+    <div id="app-header"></div>
+
+    <div class="container">
+        <div class="page-title">Debug & Self-Test</div>
+        <div class="desc">
+            Run a full smoke test across APIs and critical flows. Supply your <span class="pill">Admin Key</span> to enable admin/staff tests.
+            Optional: attach a short audio sample to test the voice routes. Includes <b>Twilio phone</b> checks (TwiML, callback validation, and webhook auto-sync).
+        </div>
+
+        <div id="keyNotice" class="notice"></div>
+
+        <div class="panel">
+            <div class="row">
+                <input id="adminKey" class="input" type="password" placeholder="Admin key (used for ALL admin/diag tests)" />
+                <input id="voiceFile" class="input" type="file" accept="audio/*" />
+                <button id="runBtn" class="btn primary">▶ Run All Tests</button>
+                <button id="abortBtn" class="btn destructive" style="display:none">■ Abort</button>
+                <span id="summary" class="stat muted"><span class="dot"></span><span>Idle</span></span>
+                <span id="statsPass" class="stat ok"><span class="dot"></span><span>0 Passed</span></span>
+                <span id="statsFail" class="stat err"><span class="dot"></span><span>0 Failed</span></span>
+                <span id="statsSkip" class="stat warn"><span class="dot"></span><span>0 Skipped</span></span>
+            </div>
+        </div>
+
+        <div class="grid" id="cards"></div>
+
+        <div class="panel">
+            <div class="header">
+                <h3 style="margin:0">Routes detected from /api/diag/routes</h3>
+                <span class="small">Auto-listing helps catch new endpoints not yet covered by curated tests.</span>
+            </div>
+            <div id="routes" class="log">Click “Run All Tests” to fetch routes…</div>
+        </div>
+
+        <div class="small">Tip: values persist in localStorage on this device.</div>
+    </div>
+
+    <script>
+        /* ===== Notice & localStorage ===== */
+        const keyNotice = document.getElementById('keyNotice');
+        const el = sel => document.querySelector(sel);
+        const adminKeyEl = el('#adminKey');
+        const voiceFileEl = el('#voiceFile');
+        const runBtn = el('#runBtn');
+        const abortBtn = el('#abortBtn');
+        const summaryEl = el('#summary');
+        const statPass = el('#statsPass');
+        const statFail = el('#statsFail');
+        const statSkip = el('#statsSkip');
+        const cardsEl = el('#cards');
+        const routesEl = el('#routes');
+
+        const BASE = '';
+        const LS = {
+            get() { try { return JSON.parse(localStorage.getItem('ceobot-debug') || '{}') || {} } catch { return {} } },
+            set(x) { localStorage.setItem('ceobot-debug', JSON.stringify(x || {})) }
+        };
+        { const s = LS.get(); if (s.adminKey) adminKeyEl.value = s.adminKey; }
+        function adminHeaderFromTextbox() {
+            const k = (adminKeyEl.value || '').trim();
+            return k ? { 'X-Admin-Key': k } : {};
+        }
+        function hasAdminKey() { return !!(adminKeyEl.value || '').trim(); }
+        function updateNotice() {
+            keyNotice.textContent = hasAdminKey()
+                ? 'Admin key present — admin & diag tests will include the header.'
+                : 'No admin key in the field — admin & diag tests will FAIL with 401 (security working).';
+        }
+        updateNotice();
+
+        /** fetch wrapper */
+        async function hit(path, { method = 'GET', admin = false, staffKey = null, body = null, json = true, formData = null, timeoutMs = 20000, headersExtra = null } = {}) {
+            const url = BASE + path;
+            const headers = {};
+            if (admin) Object.assign(headers, adminHeaderFromTextbox());
+            if (staffKey) headers['X-Staff-Key'] = staffKey;
+            if (headersExtra) Object.assign(headers, headersExtra);
+
+            const controller = new AbortController();
+            const to = setTimeout(() => controller.abort('timeout'), timeoutMs);
+            const init = { method, headers, signal: controller.signal, cache: 'no-store' };
+            if (json && body) { headers['Content-Type'] = 'application/json'; init.body = JSON.stringify(body); }
+            if (formData) { delete headers['Content-Type']; init.body = formData; }
+
+            const t0 = performance.now(); let res, text;
+            try { res = await fetch(url, init); text = await res.text(); } finally { clearTimeout(to); }
+            const t1 = performance.now();
+
+            const headersObj = {}; res?.headers?.forEach((v, k) => headersObj[k.toLowerCase()] = v);
+            let parsed = null; try { parsed = text ? JSON.parse(text) : null } catch { }
+            return { ok: res?.ok || false, status: res?.status ?? 0, timeMs: Math.round(t1 - t0), bodyText: text, json: parsed, headers: headersObj };
+        }
+
+        /* ===== UI helpers ===== */
+        function cardTemplate(id, title) {
+            return `
+          <div class="card col-6" id="card-${id}">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+              <h4>${title}</h4>
+              <span class="status-chip muted" id="chip-${id}"><span class="dot"></span><span>Waiting</span></span>
+            </div>
+            <div class="kvs">
+              <div class="k">HTTP</div><div id="kv-http-${id}">–</div>
+              <div class="k">Time</div><div id="kv-time-${id}">–</div>
+              <div class="k">Notes</div><div id="kv-note-${id}">–</div>
+            </div>
+            <div class="log" id="log-${id}">—</div>
+          </div>`;
+        }
+        function setChip(id, state, text) { const c = el('#chip-' + id); c.className = 'status-chip ' + (state || 'muted'); c.innerHTML = `<span class="dot"></span><span>${text}</span>`; }
+        function setKv(id, http, time, note) { el('#kv-http-' + id).textContent = http; el('#kv-time-' + id).textContent = time + ' ms'; el('#kv-note-' + id).textContent = note || ''; }
+        function setLog(id, text, isBad = false) { const L = el('#log-' + id); L.textContent = text || '—'; L.className = 'log' + (isBad ? ' bad' : ''); }
+
+        /* ===== Tests ===== */
+        function defineTests() {
+            return [
+                {
+                    id: 'health', title: 'Health',
+                    enabled: () => true,
+                    run: async () => { const r = await hit('/api/health'); const ok = r.ok && r.json?.status === 'ok'; return { ok, note: ok ? 'OK' : 'Unexpected payload', details: dump(r) }; }
+                },
+                {
+                    id: 'sec-headers', title: 'Security headers (/api/health)',
+                    enabled: () => true,
+                    run: async () => {
+                        const r = await hit('/api/health'); const h = r.headers || {};
+                        const checks = {
+                            'cache-control': (h['cache-control'] || '').includes('no-store'),
+                            'x-content-type-options': (h['x-content-type-options'] || '').toLowerCase() === 'nosniff',
+                            'referrer-policy': (h['referrer-policy'] || '').length > 0,
+                            'permissions-policy': (h['permissions-policy'] || '').includes('microphone'),
+                            'x-frame-options': (h['x-frame-options'] || '').toUpperCase() === 'DENY',
+                            'cross-origin-opener-policy': (h['cross-origin-opener-policy'] || '').includes('same-origin'),
+                            'cross-origin-resource-policy': (h['cross-origin-resource-policy'] || '').includes('same-origin'),
+                            'content-security-policy': (h['content-security-policy'] || '').includes("default-src 'none'")
+                        };
+                        const missing = Object.entries(checks).filter(([, v]) => !v).map(([k]) => k);
+                        const ok = r.ok && missing.length === 0;
+                        const note = ok ? 'All headers present' : 'Missing: ' + missing.join(', ');
+                        return { ok, note, details: 'Headers:\n' + JSON.stringify(h, null, 2) };
+                    }
+                },
+                {
+                    id: 'openai', title: 'OpenAI Diagnostics',
+                    enabled: () => true,
+                    run: async () => {
+                        const r = await hit('/api/diag/openai', { headersExtra: adminHeaderFromTextbox() });
+                        const haveKey = hasAdminKey();
+                        const ok = r.ok && r.json;
+                        const note = (!haveKey && r.status === 401)
+                            ? 'Expected 401 (admin key box empty)'
+                            : ('model=' + (r.json?.model || '?') + ', stt=' + (r.json?.transcribeModel || '?') + (r.json?.hasKey === true ? '' : ' (⚠ no API key)'));
+                        return { ok, note, details: dump(r), statusOverride: r.status };
+                    }
+                },
+                {
+                    id: 'routes', title: 'Routes listing',
+                    enabled: () => true,
+                    run: async (ctx) => {
+                        const r = await hit('/api/diag/routes', { headersExtra: adminHeaderFromTextbox() });
+                        const haveKey = hasAdminKey();
+                        const expectedFail = !haveKey && r.status === 401;
+                        const ok = expectedFail ? false : r.ok;
+                        if (r.ok && Array.isArray(r.json)) { ctx.routes = r.json; showRoutes(r.json); }
+                        const note = expectedFail ? 'Expected 401 (admin key box empty)' : (r.ok ? `${r.json.length} routes` : 'Failed');
+                        return { ok, note, details: dump(r), statusOverride: r.status };
+                    }
+                },
+
+                // Classifier + voice
+                {
+                    id: 'classify-en', title: 'Classify (EN, Normal plumbing)',
+                    enabled: () => true,
+                    run: async () => {
+                        const r = await hit('/api/classify', { method: 'POST', body: { description: "Faucet is dripping slowly into the sink. No flooding; can wait." } });
+                        const ok = r.ok && r.json?.ai?.priority === 'Normal' && r.json?.ai?.category === 'Plumbing';
+                        return { ok, note: ok ? 'Expected Normal/Plumbing' : 'Got ' + JSON.stringify(r.json?.ai), details: dump(r) };
+                    }
+                },
+                {
+                    id: 'classify-fr', title: 'Classify (FR, Emergency gas)',
+                    enabled: () => true,
+                    run: async () => {
+                        const r = await hit('/api/classify', { method: 'POST', body: { description: "Il y a une forte odeur de gaz près de la cuisinière et on entend un sifflement." } });
+                        const ok = r.ok && r.json?.ai?.priority === 'Emergency' && (r.json?.ai?.category === 'Gas' || r.json?.merged?.category === 'Gas');
+                        return { ok, note: ok ? 'Expected Emergency/Gas' : 'Got ' + JSON.stringify(r.json?.ai), details: dump(r) };
+                    }
+                },
+                {
+                    id: 'ticket-create', title: 'Ticket Create',
+                    enabled: () => true,
+                    run: async (ctx) => {
+                        const r = await hit('/api/tickets', { method: 'POST', body: { tenantName: "Debug Tenant", unit: "D-TEST", contact: "debug@example.com", description: "test ticket via debug page" } });
+                        const ok = r.ok && (Number.isInteger(r.json?.id) || Number.isInteger(r.json?.Id));
+                        if (ok) ctx.ticketId = r.json.id ?? r.json.Id;
+                        return { ok, note: ok ? ('Created #' + ctx.ticketId) : 'Unexpected response', details: dump(r) };
+                    }
+                },
+                {
+                    id: 'voice-parse', title: 'Voice Parse (text only, FR-QC)',
+                    enabled: () => true,
+                    run: async () => {
+                        const r = await hit('/api/voice/parse', { method: 'POST', body: { text: "C’est Kevin à l’appartement 35 sur 257 Dulwich. Le robinet coule, mon numéro 514-555-0101." } });
+                        const ok = r.ok && r.json?.parsed && (r.json.parsed.lang === 'fr' || r.json.langUsed === 'fr');
+                        return { ok, note: ok ? 'Lang=fr; unit/address parsed' : 'Weak parse', details: dump(r) };
+                    }
+                },
+                {
+                    id: 'voice-transcribe', title: 'Voice Transcribe (optional file)',
+                    enabled: () => !!voiceFileEl.files[0],
+                    run: async () => {
+                        const fd = new FormData(); fd.append('audio', voiceFileEl.files[0]); const r = await hit('/api/voice/transcribe', { method: 'POST', formData: fd, json: false });
+                        const ok = r.status === 200; return { ok, note: ok ? 'Transcribed' : 'Failed', details: dump(r) };
+                    }
+                },
+                {
+                    id: 'voice-submit', title: 'Voice → Ticket (optional file)',
+                    enabled: () => !!voiceFileEl.files[0],
+                    run: async (ctx) => {
+                        const fd = new FormData(); fd.append('audio', voiceFileEl.files[0]); const r = await hit('/api/voice', { method: 'POST', formData: fd, json: false });
+                        let ok = false, id = null; try { id = JSON.parse(r.bodyText || '{}')?.id; ok = r.status === 200 && id; } catch { } if (ok) ctx.voiceTicketId = id;
+                        return { ok, note: ok ? ('Ticket #' + ctx.voiceTicketId) : 'Failed', details: r.bodyText || '' };
+                    }
+                },
+
+                // Twilio flow
+                {
+                    id: 'twilio-inbound-get', title: 'Twilio Inbound (GET TwiML)',
+                    enabled: () => true,
+                    run: async () => {
+                        const r = await hit('/api/voice/twilio/inbound'); const ok = r.status === 200 && /<Response>[\s\S]*<Record/i.test(r.bodyText || '');
+                        return { ok, note: ok ? 'TwiML served' : 'Missing <Record/>', details: r.bodyText || '(empty)' };
+                    }
+                },
+                {
+                    id: 'twilio-inbound-post', title: 'Twilio Inbound (POST TwiML)',
+                    enabled: () => true,
+                    run: async () => {
+                        const r = await hit('/api/voice/twilio/inbound', { method: 'POST' }); const ok = r.status === 200 && /recordingStatusCallback=.*\/api\/voice\/twilio\/recording-complete/i.test(r.bodyText || '');
+                        return { ok, note: ok ? 'Record & callback present' : 'Callback missing', details: r.bodyText || '(empty)' };
+                    }
+                },
+                {
+                    id: 'twilio-callback-validate', title: 'Twilio Callback (validation)',
+                    enabled: () => true,
+                    run: async () => {
+                        const fd = new FormData(); fd.append('CallSid', 'CA_debug'); const r = await hit('/api/voice/twilio/recording-complete', { method: 'POST', formData: fd, json: false });
+                        const body = (() => { try { return JSON.parse(r.bodyText) } catch { return null } })();
+                        const ok = r.status === 400 && (body?.error || '').toLowerCase().includes('recordingurl');
+                        return { ok, note: ok ? 'Expected 400: RecordingUrl missing' : 'Unexpected response', details: dump(r), statusOverride: r.status };
+                    }
+                },
+                {
+                    id: 'twilio-sync', title: 'Twilio Webhook Auto-Sync',
+                    enabled: () => hasAdminKey(),
+                    run: async () => {
+                        const r = await hit('/api/voice/twilio/sync-webhook', { method: 'POST', admin: true }); const ok = r.ok && r.json?.ok === true;
+                        return { ok, note: ok ? ('VoiceUrl → ' + (r.json?.voiceUrl || '')) : 'Failed (check creds / ngrok / baseUrl)', details: dump(r) };
+                    }
+                },
+                {
+                    id: 'voicemail-contact', title: 'Voicemail ticket has contact (phone #)',
+                    enabled: () => hasAdminKey(),
+                    run: async () => {
+                        const r = await hit('/api/admin/tickets', { admin: true });
+                        if (!r.ok || !Array.isArray(r.json)) return { ok: false, note: 'Failed to list tickets', details: dump(r) };
+                        const vm = r.json.find(t => (t.tenantName || '').toLowerCase().includes('(voicemail)') || (t.description || '').toLowerCase().includes('voicemail'));
+                        if (!vm) return { ok: false, note: 'Skipped: no voicemail tickets yet', details: 'Create one by calling your Twilio number.', statusOverride: 299 };
+                        const ok = !!(vm.contact && String(vm.contact).trim().length >= 7);
+                        return { ok, note: ok ? ('Contact: ' + vm.contact) : 'Missing contact', details: JSON.stringify(vm, null, 2) };
+                    }
+                },
+
+                // Header vs. deprecated query-key
+                {
+                    id: 'admin-deprecated-query', title: 'Admin list via ?key= (deprecated path)',
+                    enabled: () => hasAdminKey(),
+                    run: async () => {
+                        const k = encodeURIComponent((adminKeyEl.value || '').trim());
+                        const r = await hit(`/api/admin/tickets?key=${k}`); // no admin:true on purpose
+                        const ok = r.ok && String(r.headers['x-deprecated-query-key'] || '').toLowerCase() === 'true';
+                        const note = ok ? 'Back-compat shim active (X-Deprecated-Query-Key: true)' : 'Missing deprecation header or request failed';
+                        return { ok, note, details: dump(r) };
+                    }
+                },
+
+                // Admin/staff flow (header from textbox)
+                {
+                    id: 'admin-me', title: 'Admin Auth Check',
+                    enabled: () => hasAdminKey(),
+                    run: async () => {
+                        const r = await hit('/api/admin/me', { admin: true }); const ok = r.ok === true;
+                        return { ok, note: ok ? 'Authorized' : 'Unauthorized', details: dump(r), statusOverride: r.status };
+                    }
+                },
+                {
+                    id: 'admin-list-tickets', title: 'Admin Tickets List',
+                    enabled: () => hasAdminKey(),
+                    run: async () => {
+                        const r = await hit('/api/admin/tickets', { admin: true }); const ok = r.ok && Array.isArray(r.json);
+                        return { ok, note: ok ? `${r.json.length} tickets` : 'Failed', details: dump(r) };
+                    }
+                },
+                {
+                    id: 'admin-create-staff', title: 'Admin Create Staff (temporary)',
+                    enabled: () => hasAdminKey(),
+                    run: async (ctx) => {
+                        const r = await hit('/api/admin/staff', { method: 'POST', body: { name: "Debug Staff", email: null, phone: null, isActive: true, isAdmin: false, preferredChannel: "Email", handles: ["Plumbing"] }, admin: true });
+                        const ok = r.ok && r.json?.id && r.json?.accessKey; if (ok) { ctx.staffId = r.json.id; ctx.staffKey = r.json.accessKey; }
+                        return { ok, note: ok ? `Staff #${ctx.staffId}` : 'Failed', details: dump(r) };
+                    }
+                },
+                {
+                    id: 'staff-login', title: 'Staff Login (temporary staff)',
+                    enabled: (ctx) => !!ctx.staffId && !!ctx.staffKey,
+                    run: async (ctx) => {
+                        const r = await hit('/api/staff/login', { method: 'POST', body: { id: ctx.staffId, key: ctx.staffKey } }); const ok = r.ok && r.json?.id === ctx.staffId;
+                        return { ok, note: ok ? 'OK' : 'Failed', details: dump(r) };
+                    }
+                },
+                {
+                    id: 'admin-assign', title: 'Admin Assign test ticket to staff',
+                    enabled: (ctx) => hasAdminKey() && !!ctx.staffId && !!ctx.ticketId,
+                    run: async (ctx) => {
+                        const r = await hit(`/api/admin/tickets/${ctx.ticketId}/assign/${ctx.staffId}`, { method: 'POST', admin: true }); const ok = r.ok && r.json?.ok === true;
+                        return { ok, note: ok ? 'Assigned' : 'Failed', details: dump(r) };
+                    }
+                },
+                {
+                    id: 'staff-complete', title: 'Staff Complete assigned ticket',
+                    enabled: (ctx) => !!ctx.staffId && !!ctx.staffKey && !!ctx.ticketId,
+                    run: async (ctx) => {
+                        const r = await hit(`/api/staff/${ctx.staffId}/complete/${ctx.ticketId}`, { method: 'POST', staffKey: ctx.staffKey }); const ok = r.ok && r.json?.ok === true;
+                        return { ok, note: ok ? 'Completed' : 'Failed', details: dump(r) };
+                    }
+                },
+                {
+                    id: 'cleanup-staff', title: 'Cleanup: delete temp staff',
+                    enabled: (ctx) => hasAdminKey() && !!ctx.staffId,
+                    run: async (ctx) => {
+                        const r = await hit(`/api/admin/staff/${ctx.staffId}`, { method: 'DELETE', admin: true }); const ok = r.ok && r.json?.ok === true;
+                        return { ok, note: ok ? 'Deleted' : 'Failed', details: dump(r) };
+                    }
+                },
+                {
+                    id: 'cleanup-ticket', title: 'Cleanup: delete test ticket',
+                    enabled: (ctx) => hasAdminKey() && !!ctx.ticketId,
+                    run: async (ctx) => {
+                        const r = await hit(`/api/admin/tickets/${ctx.ticketId}`, { method: 'DELETE', admin: true }); const ok = r.ok && r.json?.ok === true;
+                        return { ok, note: ok ? 'Deleted' : 'Failed', details: dump(r) };
+                    }
+                },
+                {
+                    id: 'cleanup-voice-ticket', title: 'Cleanup: delete voice ticket (if created)',
+                    enabled: (ctx) => hasAdminKey() && !!ctx.voiceTicketId,
+                    run: async (ctx) => {
+                        const r = await hit(`/api/admin/tickets/${ctx.voiceTicketId}`, { method: 'DELETE', admin: true }); const ok = r.ok && r.json?.ok === true;
+                        return { ok, note: ok ? 'Deleted' : 'Failed', details: dump(r) };
+                    }
+                },
+            ];
+        }
+
+        /* ===== Runner ===== */
+        function renderCards(defs) { cardsEl.innerHTML = defs.map(d => cardTemplate(d.id, d.title)).join(''); }
+        function dump(r) { return [`ok: ${r.ok}`, `status: ${r.status}`, `timeMs: ${r.timeMs}`, r.json ? `json: ${JSON.stringify(r.json, null, 2)}` : (r.bodyText ? `body: ${r.bodyText}` : 'body: <empty>')].join('\n'); }
+
+        let abortFlag = false;
+        async function runAll() {
+            LS.set({ adminKey: adminKeyEl.value?.trim() || null });
+            updateNotice();
+
+            const ctx = {}; const defs = defineTests(); renderCards(defs);
+            abortFlag = false; runBtn.style.display = 'none'; abortBtn.style.display = 'inline-block';
+            let pass = 0, fail = 0, skip = 0; const tStart = performance.now();
+
+            for (const d of defs) {
+                const enabled = typeof d.enabled === 'function' ? !!d.enabled(ctx) : true;
+                if (!enabled) { setChip(d.id, 'warn', 'Skipped'); setKv(d.id, '—', 0, 'Prerequisite missing'); setLog(d.id, '—'); skip++; continue; }
+                setChip(d.id, 'muted', 'Running…');
+                if (abortFlag) { setChip(d.id, 'warn', 'Aborted'); setKv(d.id, '—', 0, 'Aborted by user'); setLog(d.id, '—'); skip++; continue; }
+
+                try {
+                    const r0 = performance.now(); const out = await d.run(ctx); const dur = Math.round(performance.now() - r0);
+                    if (out.statusOverride === 299) { setChip(d.id, 'warn', 'Skipped'); setKv(d.id, '—', dur, out.note || 'Skipped'); setLog(d.id, out.details || '—'); skip++; continue; }
+                    const st = out.statusOverride ?? (out.ok ? 200 : 500);
+                    setKv(d.id, st, dur, out.note || ''); setLog(d.id, out.details || '—', !out.ok); setChip(d.id, out.ok ? 'ok' : 'err', out.ok ? 'Passed' : 'Failed');
+                    out.ok ? pass++ : fail++;
+                } catch (ex) {
+                    setChip(d.id, 'err', 'Exception'); setKv(d.id, '—', 0, ('' + ex).slice(0, 180)); setLog(d.id, (ex && ex.stack) ? ex.stack : String(ex), true); fail++;
+                }
+
+                statPass.querySelector('span:last-child').textContent = `${pass} Passed`;
+                statFail.querySelector('span:last-child').textContent = `${fail} Failed`;
+                statSkip.querySelector('span:last-child').textContent = `${skip} Skipped`;
+            }
+
+            const totalMs = Math.round(performance.now() - tStart);
+            const statusText = fail > 0 ? `${pass}✓ / ${fail}✗ / ${skip}↷ in ${totalMs} ms` : `${pass}✓ / ${skip}↷ in ${totalMs} ms`;
+            summaryEl.className = 'stat ' + (fail > 0 ? 'err' : 'ok');
+            summaryEl.innerHTML = `<span class="dot"></span><span>${statusText}</span>`;
+            runBtn.style.display = 'inline-block'; abortBtn.style.display = 'none';
+        }
+
+        function showRoutes(routes) {
+            if (!routes || !routes.length) { routesEl.textContent = '(No routes?)'; return; }
+            const lines = routes.map(r => {
+                if (typeof r === 'string') return r;
+                const pattern = r.rawText || r.routePattern?.rawText || r.RoutePattern?.RawText || '';
+                const methods = (r.methods || r.Methods || '').toString();
+                return `${methods.padEnd(10)}  ${pattern}`;
+            });
+            routesEl.textContent = lines.join('\n');
+        }
+
+        runBtn.addEventListener('click', runAll);
+        abortBtn.addEventListener('click', () => { abortFlag = true; summaryEl.className = 'stat warn'; summaryEl.innerHTML = '<span class="dot"></span><span>Aborting…</span>'; });
+
+        renderCards(defineTests());
+        summaryEl.innerHTML = `<span class="dot"></span><span>Ready</span>`;
+        summaryEl.className = 'stat muted';
+        statPass.querySelector('span:last-child').textContent = `0 Passed`;
+        statFail.querySelector('span:last-child').textContent = `0 Failed`;
+        statSkip.querySelector('span:last-child').textContent = `0 Skipped`;
+    </script>
+</body>
+</html>

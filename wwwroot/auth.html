@@ -1,0 +1,399 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>CEObot — Accounts</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="css/site.css" />
+    <style>
+        :root {
+            --ok: #28c76f;
+            --warn: #ff9f43;
+            --err: #ea5455;
+            --muted: #9aa4b2;
+            --fg: #e5e7eb;
+            --bg: #0f172a;
+            --card: #111827
+        }
+
+        body {
+            background: #0b1220;
+            color: var(--fg)
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 24px auto;
+            padding: 0 16px
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 800;
+            margin: 6px 0 16px
+        }
+
+        .panel {
+            background: var(--card);
+            border: 1px solid #1f2937;
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 6px 24px rgba(0,0,0,.25)
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px
+        }
+
+        @media(max-width:900px) {
+            .row {
+                grid-template-columns: 1fr
+            }
+        }
+
+        label {
+            font-size: 12px;
+            color: #9aa4b2
+        }
+
+        input, select {
+            background: #0b1323;
+            border: 1px solid #1f2438;
+            color: var(--fg);
+            border-radius: 10px;
+            padding: 10px
+        }
+
+        .btn {
+            background: #1f2937;
+            border: 1px solid #2b3547;
+            color: #e5e7eb;
+            padding: 10px 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700
+        }
+
+            .btn.primary {
+                background: #2b5cff;
+                border-color: #2b5cff
+            }
+
+        .stack {
+            display: grid;
+            gap: 10px
+        }
+
+        .status {
+            font-family: ui-monospace,monospace;
+            background: #0b1020;
+            border: 1px dashed #213055;
+            padding: 10px;
+            border-radius: 10px;
+            white-space: pre-wrap
+        }
+
+        .ok {
+            color: var(--ok)
+        }
+
+        .warn {
+            color: var(--warn)
+        }
+
+        .err {
+            color: var(--err)
+        }
+
+        .muted {
+            color: var(--muted)
+        }
+
+        .split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px
+        }
+
+        @media(max-width:900px) {
+            .split {
+                grid-template-columns: 1fr
+            }
+        }
+
+        .small {
+            color: #9aa4b2;
+            font-size: 12px
+        }
+
+        .link {
+            color: #9ec1ff;
+            text-decoration: underline dashed;
+            cursor: pointer
+        }
+    </style>
+    <script defer src="header.js"></script>
+</head>
+<body>
+    <div id="app-header"></div>
+
+    <div class="container">
+        <div class="page-title">Accounts (Register · Verify · Login)</div>
+
+        <div class="panel split">
+            <!-- Register -->
+            <div class="stack">
+                <h3 style="margin:0">Register</h3>
+                <div class="row">
+                    <div class="stack">
+                        <label>Email</label>
+                        <input id="regEmail" type="email" placeholder="you@example.com" />
+                    </div>
+                    <div class="stack">
+                        <label>Password</label>
+                        <input id="regPwd" type="password" placeholder="Min 8 chars" />
+                    </div>
+                    <div class="stack">
+                        <label>Role</label>
+                        <select id="regRole">
+                            <option value="Staff">Staff</option>
+                            <option value="Admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="stack">
+                        <label>StaffId (optional link to StaffMember)</label>
+                        <input id="regStaffId" type="number" placeholder="e.g. 1" />
+                    </div>
+                </div>
+                <div class="stack">
+                    <button id="btnRegister" class="btn primary">Register</button>
+                    <div id="regOut" class="status muted">—</div>
+                </div>
+                <div class="small">
+                    In <b>Development</b>, the server returns a <i>verify link + code</i> in the response so you can test without email.
+                    We’ll wire SMTP next.
+                </div>
+            </div>
+
+            <!-- Verify -->
+            <div class="stack">
+                <h3 style="margin:0">Verify Email</h3>
+                <div class="row">
+                    <div class="stack">
+                        <label>Email</label>
+                        <input id="verEmail" type="email" placeholder="you@example.com" />
+                    </div>
+                    <div class="stack">
+                        <label>Code</label>
+                        <input id="verCode" type="text" placeholder="Paste dev code" />
+                    </div>
+                </div>
+                <button id="btnVerify" class="btn">Verify</button>
+                <div id="verOut" class="status muted">—</div>
+            </div>
+        </div>
+
+        <div class="panel split">
+            <!-- Login -->
+            <div class="stack">
+                <h3 style="margin:0">Login</h3>
+                <div class="row">
+                    <div class="stack">
+                        <label>Email</label>
+                        <input id="logEmail" type="email" placeholder="you@example.com" />
+                    </div>
+                    <div class="stack">
+                        <label>Password</label>
+                        <input id="logPwd" type="password" placeholder="Your password" />
+                    </div>
+                </div>
+                <button id="btnLogin" class="btn primary">Login</button>
+                <div class="small">JWT is stored in a <b>Secure, HttpOnly</b> cookie. SameSite=Strict.</div>
+                <div id="logOut" class="status muted">—</div>
+            </div>
+
+            <!-- Session -->
+            <div class="stack">
+                <h3 style="margin:0">Session</h3>
+                <button id="btnMe" class="btn">Who am I?</button>
+                <button id="btnLogout" class="btn">Logout</button>
+                <div id="meOut" class="status muted">—</div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3 style="margin:0 0 12px">Notifications</h3>
+            <div class="stack" style="margin-bottom:12px">
+                <label>Email for voice copies</label>
+                <input id="prefNotifyEmail" type="email" placeholder="you@example.com" />
+            </div>
+            <label class="small" style="display:flex; align-items:center; gap:6px; margin-bottom:12px">
+                <input id="prefNotifyEnabled" type="checkbox" />
+                Send me a copy when I submit via voice
+            </label>
+            <div class="stack">
+                <button id="btnSavePrefs" class="btn primary">Save</button>
+                <div id="prefsStatus" class="status muted">Login to manage notification preferences.</div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="small">
+                Security notes: passwords are hashed with <b>PBKDF2</b> (ASP.NET Identity hasher).
+                JWTs are signed with your <code>Jwt:SigningKey</code> from <code>appsettings.Development.json</code>.
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const $ = s => document.querySelector(s);
+    const regEmail = $('#regEmail'), regPwd = $('#regPwd'), regRole = $('#regRole'), regStaffId = $('#regStaffId');
+    const regOut = $('#regOut');
+    const verEmail = $('#verEmail'), verCode = $('#verCode'), verOut = $('#verOut');
+    const logEmail = $('#logEmail'), logPwd = $('#logPwd'), logOut = $('#logOut');
+    const meOut = $('#meOut');
+    const prefEmail = $('#prefNotifyEmail');
+    const prefEnabled = $('#prefNotifyEnabled');
+    const prefsStatus = $('#prefsStatus');
+    const btnSavePrefs = $('#btnSavePrefs');
+
+    function set(el, text, cls='muted'){
+      el.className = 'status ' + cls;
+      el.textContent = text || '—';
+    }
+
+    async function api(path, opts={}){
+      const init = { method:'GET', headers:{}, ...opts };
+      if (opts.json){
+        init.headers['Content-Type'] = 'application/json';
+        init.body = JSON.stringify(opts.json);
+      }
+      // include cookies; same-origin so they’re sent automatically, but this is explicit:
+      init.credentials = 'same-origin';
+      const res = await fetch(path, init);
+      const text = await res.text();
+      let data = null; try{ data = text ? JSON.parse(text) : null }catch{}
+      return { ok: res.ok, status: res.status, data, text };
+    }
+
+    $('#btnRegister').addEventListener('click', async ()=>{
+      set(regOut, 'Registering…');
+      const staffId = regStaffId.value ? parseInt(regStaffId.value,10) : null;
+      const r = await api('/api/auth/register', { method:'POST', json:{
+        email: regEmail.value.trim(),
+        password: regPwd.value,
+        role: regRole.value,
+        staffId: staffId
+      }});
+      if(!r.ok){ set(regOut, r.text || JSON.stringify(r.data), 'err'); return; }
+
+      const dev = r.data?.dev || null;
+      let msg = 'Registered. ';
+      if(dev?.verifyUrlDev){
+        msg += `Dev verify link: ${dev.verifyUrlDev}\nDev code: ${dev.verifyCodeDev}`;
+        // Autofill verify box for convenience
+        verEmail.value = regEmail.value.trim();
+        verCode.value = dev.verifyCodeDev;
+      }
+      set(regOut, msg, 'ok');
+    });
+
+    $('#btnVerify').addEventListener('click', async ()=>{
+      set(verOut, 'Verifying…');
+      const email = encodeURIComponent(verEmail.value.trim());
+      const code  = encodeURIComponent(verCode.value.trim());
+      const r = await api(`/api/auth/verify?email=${email}&code=${code}`);
+      set(verOut, r.ok ? 'Email verified.' : (r.text || JSON.stringify(r.data)), r.ok?'ok':'err');
+    });
+
+    $('#btnLogin').addEventListener('click', async ()=>{
+      set(logOut, 'Logging in…');
+      const r = await api('/api/auth/login', { method:'POST', json:{
+        email: logEmail.value.trim(),
+        password: logPwd.value
+      }});
+      if(!r.ok){ set(logOut, r.text || JSON.stringify(r.data), 'err'); return; }
+      set(logOut, 'Logged in. Cookie set.', 'ok');
+      await me(); // show who we are
+    });
+
+    async function me(){
+      const r = await api('/api/auth/me');
+      if(!r.ok){ set(meOut, `Not logged in (status ${r.status})`, 'warn'); return; }
+      set(meOut, JSON.stringify(r.data,null,2), 'ok');
+      await loadPrefs();
+    }
+
+    async function loadPrefs(){
+      if(!prefEmail || !prefEnabled || !prefsStatus) return;
+
+      const r = await api('/api/auth/prefs');
+      if(!r.ok){
+        const loggedOut = r.status === 401 || r.status === 403;
+        prefEmail.value = '';
+        prefEnabled.checked = false;
+        prefEmail.disabled = prefEnabled.disabled = btnSavePrefs ? loggedOut : false;
+        if (btnSavePrefs) btnSavePrefs.disabled = loggedOut;
+        const msg = loggedOut ? 'Login to manage notification preferences.' : (r.text || JSON.stringify(r.data));
+        set(prefsStatus, msg, loggedOut ? 'muted' : 'warn');
+        return;
+      }
+
+      prefEmail.disabled = prefEnabled.disabled = false;
+      if (btnSavePrefs) btnSavePrefs.disabled = false;
+      prefEmail.value = r.data?.notifyEmail || '';
+      prefEnabled.checked = !!r.data?.notifyVoiceEnabled;
+      const tone = r.data?.notifyVoiceEnabled ? 'ok' : 'muted';
+      const msg = r.data?.notifyVoiceEnabled && r.data.notifyEmail
+        ? `Copies will go to ${r.data.notifyEmail}.`
+        : 'Set an email and toggle on to receive copies of voice submissions.';
+      set(prefsStatus, msg, tone);
+    }
+
+    $('#btnMe').addEventListener('click', me);
+
+    $('#btnLogout').addEventListener('click', async ()=>{
+      const r = await api('/api/auth/logout', { method:'POST' });
+      set(meOut, 'Logged out.', 'ok');
+      await loadPrefs();
+    });
+
+    btnSavePrefs?.addEventListener('click', async ()=>{
+      if(!prefEmail || !prefEnabled) return;
+
+      const email = (prefEmail.value || '').trim();
+      if(prefEnabled.checked && !email){
+        set(prefsStatus, 'Enter an email before enabling notifications.', 'err');
+        prefEmail.focus();
+        return;
+      }
+
+      const payload = { notifyVoiceEnabled: prefEnabled.checked && !!email };
+      payload.notifyEmail = email ? email : null;
+
+      set(prefsStatus, 'Saving…', 'muted');
+      if (btnSavePrefs) btnSavePrefs.disabled = true;
+      const r = await api('/api/auth/prefs', { method:'POST', json: payload });
+      if (btnSavePrefs) btnSavePrefs.disabled = false;
+
+      if(!r.ok){
+        set(prefsStatus, r.text || JSON.stringify(r.data), 'err');
+        return;
+      }
+
+      prefEmail.value = r.data?.notifyEmail || '';
+      prefEnabled.checked = !!r.data?.notifyVoiceEnabled;
+      const tone = prefEnabled.checked ? 'ok' : 'muted';
+      const msg = prefEnabled.checked && prefEmail.value
+        ? `Copies will go to ${prefEmail.value}.`
+        : 'Notifications updated.';
+      set(prefsStatus, msg, tone);
+    });
+
+    loadPrefs();
+    </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "terminal.integrated.inheritEnv": true,
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.profiles.linux": {
+    "bash": { "path": "/bin/bash", "args": ["-l"] }
+  },
+  "terminal.integrated.env.linux": {
+    "DOTNET_ROOT": "/home/gabrielfort/.dotnet",
+    "PATH": "/home/gabrielfort/.dotnet:${env:PATH}"
+  },
+  "dotnetAcquisitionExtension.sharedExistingDotnetPath": "/home/gabrielfort/.dotnet/dotnet",
+  "dotnetAcquisitionExtension.existingDotnetPath": [
+    { "extensionId": "ms-dotnettools.csharp",   "path": "/home/gabrielfort/.dotnet/dotnet" },
+    { "extensionId": "ms-dotnettools.csdevkit", "path": "/home/gabrielfort/.dotnet/dotnet" }
+  ]
+}

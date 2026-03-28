@@ -1,0 +1,268 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <!-- ===== BLOCK: ADMIN_TICKETS_HTML_HEAD START ===== -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Admin • Manage Tickets</title>
+    <link rel="stylesheet" href="/css/site.css" />
+    <!-- ===== BLOCK: ADMIN_TICKETS_HTML_HEAD END ===== -->
+    <!-- ===== BLOCK: ADMIN_TICKETS_STYLE START ===== -->
+    <style>
+        .wrap {
+            max-width: 1200px;
+            margin: 32px auto;
+            padding: 0 16px
+        }
+
+        .card {
+            background: #0f1720;
+            border: 1px solid #182230;
+            border-radius: 12px;
+            padding: 16px
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            align-items: center
+        }
+
+        .input {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #233142;
+            background: #0b1116;
+            color: #e7f3ff
+        }
+
+        .btn {
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 0;
+            background: #07b6d5;
+            color: #001018;
+            font-weight: 600;
+            cursor: pointer
+        }
+
+            .btn.ghost {
+                background: #182230;
+                color: #e7f3ff
+            }
+
+            .btn.small {
+                padding: 8px 10px;
+                font-size: .9rem
+            }
+
+        .list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px
+        }
+
+        .ticket {
+            background: #0b1116;
+            border: 1px solid #1c2a37;
+            border-radius: 12px;
+            padding: 12px
+        }
+
+        .hdr {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 6px
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid #304256;
+            font-size: .75rem
+        }
+
+        .muted {
+            opacity: .8
+        }
+
+        .stack {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+    </style>
+    <!-- ===== BLOCK: ADMIN_TICKETS_STYLE END ===== -->
+</head>
+<body>
+    <div class="wrap">
+        <div id="site-header"></div>
+        <script src="/js/header.js" defer></script>
+        <h1>Admin • Tickets</h1>
+
+        <!-- ===== BLOCK: ADMIN_TICKETS_TOOLBAR START ===== -->
+        <div class="card">
+            <!-- Row 1: Admin key + Login / Logout -->
+            <div class="row" style="display:grid; grid-template-columns: 1fr auto auto; gap:8px">
+                <input id="key" class="input" style="min-width:260px" placeholder="Admin key (stored locally)" />
+                <button id="btnLogin" class="btn">Login</button>
+                <button id="btnLogout" class="btn ghost">Logout</button>
+            </div>
+
+            <!-- Row 2: Status + Refresh -->
+            <div class="row" style="display:grid; grid-template-columns: 1fr auto; gap:8px; margin-top:8px">
+                <select id="status" class="input" style="min-width:200px">
+                    <option value="">All</option>
+                    <option>Open</option>
+                    <option>Ongoing</option>
+                    <option>Completed</option>
+                </select>
+                <button id="btnRefresh" class="btn ghost">Refresh</button>
+            </div>
+
+            <!-- Row 3: full-width Category filter -->
+            <div class="row" style="margin-top:8px">
+                <select id="category" class="input" style="grid-column:1 / -1;">
+                    <option value="">All Categories</option>
+                    <option>Electrical</option>
+                    <option>Plumbing</option>
+                    <option>HVAC</option>
+                    <option>LocksDoors</option>
+                    <option>Appliances</option>
+                    <option>Gas</option>
+                    <option>Internet</option>
+                    <option>Pest</option>
+                    <option>Structural</option>
+                    <option>Noise</option>
+                    <option>Emergency</option>
+                    <option>Other</option>
+                </select>
+            </div>
+        </div>
+        <!-- ===== BLOCK: ADMIN_TICKETS_TOOLBAR END ===== -->
+        <!-- ===== BLOCK: ADMIN_TICKETS_LIST START ===== -->
+        <div class="card" style="margin-top:16px">
+            <div id="list" class="list"></div>
+        </div>
+        <!-- ===== BLOCK: ADMIN_TICKETS_LIST END ===== -->
+    </div>
+
+    <!-- ===== BLOCK: ADMIN_TICKETS_SCRIPT START ===== -->
+    <script>
+        const KEYLS = 'adminKey';
+        function $(id) { return document.getElementById(id); }
+        function setKey(v) { $('key').value = v; localStorage.setItem(KEYLS, v); }
+        function getKey() { return ($('key').value || '').trim(); }
+        function api(url, opts = {}) {
+            const k = getKey();
+            const headers = { ...(opts.headers || {}) };
+            if (k) headers['X-Admin-Key'] = k;
+            return fetch(url, { ...opts, headers });
+        }
+
+
+        function buildQuery() {
+            const qs = [];
+            const st = $('status').value;
+            const cat = $('category').value;
+            if (st) qs.push('status=' + encodeURIComponent(st));
+            if (cat) qs.push('category=' + encodeURIComponent(cat));
+            return qs.length ? ('?' + qs.join('&')) : '';
+        }
+
+        function ticketCard(t) {
+            const el = document.createElement('div'); el.className = 'ticket';
+            el.innerHTML = `
+                        <div class="hdr">
+                          <span class="tag">#${t.id}</span>
+                          ${t.category ? `<span class="tag">${t.category}</span>` : ''}
+                          ${t.priority ? `<span class="tag">${t.priority}</span>` : ''}
+                          ${t.status ? `<span class="tag">${t.status}</span>` : ''}
+                          <span class="muted">
+  ${(t.tenantName || '').trim()}
+  ${(t.unit ? ('• ' + t.unit) : '')}
+  ${t.contact ? ('• ' + t.contact) : ''}
+</span>
+
+                          <button class="btn ghost small" data-act="delete" style="margin-left:auto">Delete</button>
+                        </div>
+                        <div style="white-space:pre-wrap">${t.description || ''}</div>
+                        <div class="stack" style="margin-top:8px">
+                          <select class="input" data-kind="assign" style="min-width:220px"></select>
+                          <select class="input" data-kind="status" style="min-width:160px">
+                            ${['Open', 'Ongoing', 'Completed'].map(s => `<option ${s === t.status ? 'selected' : ''}>${s}</option>`).join('')}
+                          </select>
+                          <button class="btn small" data-act="do">Apply</button>
+                        </div>`;
+            return el;
+        }
+
+        async function load() {
+            const r = await api('/api/admin/tickets' + buildQuery());
+            const list = $('list');
+            if (!r.ok) { list.innerHTML = '<div class="muted">Unauthorized or failed.</div>'; return; }
+            const arr = await r.json();
+
+            // Completed go last; others newest first
+            arr.sort((a, b) => {
+                const ca = a.status === 'Completed' ? 1 : 0, cb = b.status === 'Completed' ? 1 : 0;
+                if (ca !== cb) return ca - cb;
+                const ta = Date.parse(a.createdUtc) || 0, tb = Date.parse(b.createdUtc) || 0;
+                return tb - ta;
+            });
+
+            list.innerHTML = '';
+
+            // load staff once
+            const rs = await api('/api/admin/staff');
+            const staff = rs.ok ? await rs.json() : [];
+
+            for (const t of arr) {
+                const card = ticketCard(t);
+                list.appendChild(card);
+
+                const ddAssign = card.querySelector('[data-kind="assign"]');
+                ddAssign.innerHTML = `<option value="">(keep)</option>` +
+                    staff.map(s => `<option value="${s.id}" ${t.assignedStaffId === s.id ? 'selected' : ''}>#${s.id} — ${s.name}</option>`).join('');
+
+                card.querySelector('[data-act="do"]').onclick = async () => {
+                    const chosen = ddAssign.value;
+                    const chosenStatus = card.querySelector('[data-kind="status"]').value;
+                    if (chosen) {
+                        const r1 = await api(`/api/admin/tickets/${t.id}/assign/${chosen}`, { method: 'POST' });
+                        if (!r1.ok) { alert('Assign failed'); return; }
+                    }
+                    const r2 = await api(`/api/admin/tickets/${t.id}/status`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: chosenStatus })
+                    });
+                    if (!r2.ok) { alert('Status update failed'); return; }
+                    load();
+                };
+
+                card.querySelector('[data-act="delete"]').onclick = async () => {
+                    if (!confirm(`Delete ticket #${t.id}? This cannot be undone.`)) return;
+                    const rDel = await api(`/api/admin/tickets/${t.id}`, { method: 'DELETE' });
+                    if (!rDel.ok) { alert('Delete failed'); return; }
+                    load();
+                };
+            }
+        }
+
+        $('btnLogin').onclick = () => { setKey(getKey()); load(); };
+        $('btnRefresh').onclick = load;
+        $('status').onchange = load;
+        $('category').onchange = load;
+
+        setKey(localStorage.getItem(KEYLS) || '');
+        if (getKey()) load();
+    </script>
+    <!-- ===== BLOCK: ADMIN_TICKETS_SCRIPT END ===== -->
+</body>
+</html>

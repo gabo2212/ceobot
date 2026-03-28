@@ -1,0 +1,15 @@
+wwwroot\admin.html
+wwwroot\admin-accounts.html
+wwwroot\admin-staff.html
+wwwroot\admin-tickets.html
+wwwroot\auth.html
+wwwroot\css\site.css
+wwwroot\debug.html
+wwwroot\img\logo.png
+wwwroot\img\logo.svg
+wwwroot\index.html
+wwwroot\js\header.js
+wwwroot\partials\header.html
+wwwroot\staff.html
+wwwroot\tenant.html
+wwwroot\voice.html
